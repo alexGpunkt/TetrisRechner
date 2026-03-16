@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Mit GitHub Link</title>
+    <title>Tetris Summen - Mit Verlauf</title>
     <style>
         * {
             box-sizing: border-box;
@@ -382,6 +382,7 @@
             border-left: 8px solid #f39c12;
             color: white;
             font-weight: 600;
+            word-break: break-word;
         }
 
         .empty-history {
@@ -449,7 +450,7 @@
                 </ul>
             </div>
 
-            <!-- GitHub Button -->
+            <!-- GitHub Button mit deiner Repository URL -->
             <div class="menu-section">
                 <div class="menu-title">Links</div>
                 <button class="github-btn" id="githubBtn">
@@ -525,14 +526,12 @@
             const hamburgerMenu = document.getElementById('hamburgerMenu');
             const menuOverlay = document.getElementById('menuOverlay');
             
-            // GitHub Button
+            // GitHub Button mit deiner Repository URL
             const githubBtn = document.getElementById('githubBtn');
 
-            // GitHub Button Funktion
+            // GitHub Button Funktion - mit deiner Repository URL
             githubBtn.addEventListener('click', () => {
-                // Hier die GitHub-URL einfügen, wenn das Projekt gehostet wird
-                // Aktuell öffnet es die GitHub Startseite als Platzhalter
-                window.open('https://github.com', '_blank');
+                window.open('https://alexgpunkt.github.io/TetrisRechner/', '_blank');
                 // Menü schließen
                 toggleMenu(false);
             });
@@ -564,14 +563,16 @@
             });
 
             // History Sichtbarkeit
-            showHistoryCheck.addEventListener('change', (e) => {
+            function updateHistoryVisibility() {
                 const historySection = document.getElementById('historySection');
-                if (e.target.checked) {
+                if (showHistoryCheck.checked) {
                     historySection.style.display = 'block';
                 } else {
                     historySection.style.display = 'none';
                 }
-            });
+            }
+
+            showHistoryCheck.addEventListener('change', updateHistoryVisibility);
 
             // Summe anzeigen Button
             showSumBtn.addEventListener('click', () => {
@@ -686,10 +687,11 @@
                 if (historySums.length === 0) {
                     historyList.innerHTML = '<li class="empty-history">Noch keine Summen</li>';
                 } else {
-                    historySums.slice().reverse().forEach((s, i) => {
+                    // Neueste Einträge zuerst anzeigen
+                    historySums.slice().reverse().forEach((s, index) => {
                         const li = document.createElement('li');
                         li.className = 'history-item';
-                        li.textContent = `Summe ${historySums.length - i}: ${s}`;
+                        li.textContent = `Summe ${historySums.length - index}: ${s}`;
                         historyList.appendChild(li);
                     });
                 }
@@ -698,7 +700,7 @@
             // Event Listener
             figureSelect.addEventListener('change', (e) => {
                 currentFigure = e.target.value;
-                renderGrid(); // renderGrid ruft hideSum() auf
+                renderGrid();
                 // Menü automatisch schließen
                 setTimeout(() => toggleMenu(false), 300);
             });
@@ -745,10 +747,14 @@
 
             // Initialisierung
             showHistoryCheck.checked = false;
-            document.getElementById('historySection').style.display = 'none';
+            updateHistoryVisibility();
             
             renderGrid();
             updateHistoryList();
+
+            // Test-Eintrag für die Historie (kann später entfernt werden)
+            // addHistoryEntry(238);
+            // addHistoryEntry(206);
         })();
     </script>
 </body>
