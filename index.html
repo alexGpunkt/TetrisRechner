@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Mit QR-Code</title>
+    <title>Tetris Summen - Mit Entdeckungen</title>
     <style>
         * {
             box-sizing: border-box;
@@ -62,6 +62,7 @@
             border: 4px solid #398ead;
             box-shadow: inset 0 0 30px #000000cc;
             min-height: 0;
+            position: relative;
         }
 
         .number-grid {
@@ -100,6 +101,114 @@
             border-color: white;
             transform: scale(1.02);
             text-shadow: none;
+        }
+
+        /* Discovery Panel - wird über dem Grid eingeblendet */
+        .discovery-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            border: 3px solid #f39c12;
+            border-radius: 40px;
+            padding: 20px 25px;
+            color: white;
+            z-index: 1100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+            max-height: 70vh;
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        .discovery-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+
+        .discovery-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 10px;
+        }
+
+        .discovery-header h3 {
+            font-size: 1.4rem;
+            color: #f39c12;
+            flex: 1;
+        }
+
+        .discovery-close {
+            width: 40px;
+            height: 40px;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 0 #b33f3f;
+        }
+
+        .discovery-close:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .discovery-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .discovery-section {
+            background: #1a3e4e;
+            border-radius: 30px;
+            padding: 15px;
+            border-left: 8px solid #f39c12;
+        }
+
+        .discovery-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        .discovery-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #e0f0ff;
+            margin-bottom: 10px;
+        }
+
+        .discovery-example {
+            background: #0f2a33;
+            border-radius: 25px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 1rem;
+            border: 1px solid #5fa3c0;
+            color: #b3e5fc;
+        }
+
+        .discovery-tip {
+            background: #f39c1220;
+            border-radius: 25px;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            border-left: 4px solid #f39c12;
+            color: #ffd966;
         }
 
         /* Unterer Bereich mit Button und Summenanzeige */
@@ -532,6 +641,10 @@
                     <label for="showHistory">Historie anzeigen</label>
                     <input type="checkbox" id="showHistory">
                 </div>
+                <div class="menu-item">
+                    <label for="showDiscoveries">🔍 Entdeckungen anzeigen</label>
+                    <input type="checkbox" id="showDiscoveries">
+                </div>
             </div>
 
             <div class="menu-section" id="historySection">
@@ -550,6 +663,17 @@
                     </svg>
                     QR Code anzeigen
                 </button>
+            </div>
+        </div>
+
+        <!-- Discovery Panel (Entdeckungen) -->
+        <div class="discovery-panel hidden" id="discoveryPanel">
+            <div class="discovery-header">
+                <h3>🔍 Mathematische Entdeckungen</h3>
+                <button class="discovery-close" id="discoveryClose">✕</button>
+            </div>
+            <div class="discovery-content" id="discoveryContent">
+                <!-- Wird dynamisch befüllt -->
             </div>
         </div>
 
@@ -598,6 +722,8 @@
             let lastTapTime = 0;
             let lastTapTarget = null;
             let sumVisible = false;
+            let lastMoveDirection = null;
+            let moveCount = 0;
 
             const figures = {
                 I: [[0,0], [0,1], [0,2], [0,3]],
@@ -605,6 +731,15 @@
                 T: [[0,0], [0,1], [0,2], [1,1]],
                 L: [[0,0], [1,0], [2,0], [2,1]],
                 J: [[0,1], [1,1], [2,1], [2,0]]
+            };
+
+            // Figuren-Namen für Anzeige
+            const figureNames = {
+                I: "I-Balken",
+                O: "O-Quadrat",
+                T: "T-Form",
+                L: "L-Form",
+                J: "J-Form"
             };
 
             // Grid befüllen (1-100)
@@ -623,6 +758,10 @@
             const showSumBtn = document.getElementById('showSumBtn');
             const historyList = document.getElementById('historyList');
             const showHistoryCheck = document.getElementById('showHistory');
+            const showDiscoveriesCheck = document.getElementById('showDiscoveries');
+            const discoveryPanel = document.getElementById('discoveryPanel');
+            const discoveryContent = document.getElementById('discoveryContent');
+            const discoveryClose = document.getElementById('discoveryClose');
             
             // Hamburger Menü Elemente
             const hamburgerBtn = document.getElementById('hamburgerBtn');
@@ -635,11 +774,159 @@
             const qrCloseBtn = document.getElementById('qrCloseBtn');
             const qrCanvas = document.getElementById('qrCanvas');
 
-            // QR Code generieren mit der Bibliothek
+            // Entdeckungen basierend auf Figur und Bewegung generieren
+            function generateDiscoveries() {
+                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
+                const sum = calculateSum();
+                const cellCount = cells.length;
+                
+                let discoveries = [];
+
+                // Allgemeine Entdeckungen (für alle Figuren)
+                discoveries.push({
+                    title: "📐 Über diese Figur",
+                    text: `Du hast die **${figureNames[currentFigure]}** gewählt. Sie bedeckt **${cellCount} Zellen**.`,
+                    example: `Aktuelle Position: ${cells.map(c => grid[c.row][c.col]).join(' + ')} = ${sum}`
+                });
+
+                // Bewegungs-Entdeckungen
+                discoveries.push({
+                    title: "⬆️⬇️ Vertikale Bewegung (nach oben/unten)",
+                    text: `Bewegst du die Figur **eine Zeile nach unten**, erhöht sich jede Zahl um **+10**.`,
+                    example: `Die Summe ändert sich um **+${cellCount * 10}** (${cellCount} Zellen × 10)`,
+                    tip: `Probiere aus: Drücke ↓ und beobachte, wie die Summe steigt!`
+                });
+
+                discoveries.push({
+                    title: "⬅️➡️ Horizontale Bewegung (nach links/rechts)",
+                    text: `Bewegst du die Figur **eine Spalte nach rechts**, erhöht sich jede Zahl um **+1**.`,
+                    example: `Die Summe ändert sich um **+${cellCount}** (${cellCount} Zellen × 1)`,
+                    tip: `Probiere aus: Drücke → und beobachte, wie die Summe steigt!`
+                });
+
+                discoveries.push({
+                    title: "↘️ Diagonale Bewegung",
+                    text: `Bewegst du die Figur **diagonal** (nach rechts-unten), erhöht sich jede Zahl um **+11**.`,
+                    example: `Die Summe ändert sich um **+${cellCount * 11}** (${cellCount} Zellen × 11)`,
+                    tip: `Das ist die Kombination aus +10 (runter) und +1 (rechts)!`
+                });
+
+                // Figuren-spezifische Entdeckungen
+                if (currentFigure === 'O') {
+                    discoveries.push({
+                        title: "🎯 Besonderheit des O-Quadrats",
+                        text: `Das 2x2-Quadrat hat eine interessante Eigenschaft:`,
+                        example: `Oben links: 1+2+11+12 = 26\nUnten rechts: 89+90+99+100 = 378\nDifferenz: 352`,
+                        tip: `Alle Summen des O-Quadrats sind **gerade Zahlen**!`
+                    });
+                }
+
+                if (currentFigure === 'I') {
+                    discoveries.push({
+                        title: "📏 Besonderheit des I-Balkens",
+                        text: `Der I-Balken kann horizontal oder vertikal ausgerichtet sein.`,
+                        example: `Horizontal (Zeile 1): 1+2+3+4 = 10\nVertikal (Spalte 1): 1+11+21+31 = 64`,
+                        tip: `Die **Ausrichtung** macht einen riesigen Unterschied (hier 54)!`
+                    });
+                }
+
+                if (currentFigure === 'T') {
+                    discoveries.push({
+                        title: "🔺 Besonderheit der T-Form",
+                        text: `Die T-Form hat eine asymmetrische Verteilung.`,
+                        example: `Die untere Zelle (Mitte) ist oft viel größer als die oberen drei.`,
+                        tip: `Vergleiche: 1+2+3+12 = 18 vs. 91+92+93+100 = 376`
+                    });
+                }
+
+                // Extremwert-Entdeckungen
+                const minSum = getMinSumForFigure(currentFigure);
+                const maxSum = getMaxSumForFigure(currentFigure);
+                
+                discoveries.push({
+                    title: "📊 Extremwerte",
+                    text: `Mit dieser Figur kannst du folgende Summen erreichen:`,
+                    example: `Kleinste Summe: **${minSum}** (oben links)\nGrößte Summe: **${maxSum}** (unten rechts)`,
+                    tip: `Die Spannweite beträgt **${maxSum - minSum}**!`
+                });
+
+                // Muster-Entdeckung
+                discoveries.push({
+                    title: "🧮 Mathematisches Muster",
+                    text: `Bei **${moveCount} Bewegungen** in dieselbe Richtung:`,
+                    example: `${moveCount} × nach rechts: +${moveCount * cellCount}\n${moveCount} × nach unten: +${moveCount * cellCount * 10}`,
+                    tip: `Die Summe ändert sich **gleichmäßig** - das ist eine lineare Funktion!`
+                });
+
+                return discoveries;
+            }
+
+            // Hilfsfunktion für Minimal-Summe
+            function getMinSumForFigure(figType) {
+                const cells = getFigureCells(figType, 0, 0);
+                return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
+            }
+
+            // Hilfsfunktion für Maximal-Summe
+            function getMaxSumForFigure(figType) {
+                const cells = getFigureCells(figType, 9, 9);
+                return cells.reduce((acc, {row, col}) => {
+                    // Korrigiere falls außerhalb
+                    const r = Math.min(row, 9);
+                    const c = Math.min(col, 9);
+                    return acc + grid[r][c];
+                }, 0);
+            }
+
+            // Discovery Panel aktualisieren
+            function updateDiscoveries() {
+                const discoveries = generateDiscoveries();
+                
+                let html = '';
+                discoveries.forEach(d => {
+                    html += `
+                        <div class="discovery-section">
+                            <div class="discovery-title">${d.title}</div>
+                            <div class="discovery-text">${d.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+                            <div class="discovery-example">${d.example.replace(/\n/g, '<br>')}</div>
+                            ${d.tip ? `<div class="discovery-tip">💡 ${d.tip}</div>` : ''}
+                        </div>
+                    `;
+                });
+                
+                discoveryContent.innerHTML = html;
+            }
+
+            // Discovery Panel ein-/ausblenden
+            function toggleDiscoveryPanel(show) {
+                if (show === undefined) {
+                    if (showDiscoveriesCheck.checked) {
+                        updateDiscoveries();
+                        discoveryPanel.classList.remove('hidden');
+                    } else {
+                        discoveryPanel.classList.add('hidden');
+                    }
+                } else if (show) {
+                    updateDiscoveries();
+                    discoveryPanel.classList.remove('hidden');
+                } else {
+                    discoveryPanel.classList.add('hidden');
+                }
+            }
+
+            showDiscoveriesCheck.addEventListener('change', (e) => {
+                toggleDiscoveryPanel(e.target.checked);
+            });
+
+            discoveryClose.addEventListener('click', () => {
+                showDiscoveriesCheck.checked = false;
+                discoveryPanel.classList.add('hidden');
+            });
+
+            // QR Code generieren
             function generateQRCode() {
                 const url = 'https://alexgpunkt.github.io/TetrisRechner/';
                 
-                // QR-Code auf Canvas zeichnen
                 QRCode.toCanvas(qrCanvas, url, {
                     width: 250,
                     margin: 2,
@@ -650,7 +937,6 @@
                 }, function(error) {
                     if (error) {
                         console.error('Fehler beim Generieren des QR-Codes:', error);
-                        // Fallback: Text anzeigen
                         qrCanvas.getContext('2d').clearRect(0, 0, 250, 250);
                         qrCanvas.getContext('2d').fillStyle = '#ffffff';
                         qrCanvas.getContext('2d').fillRect(0, 0, 250, 250);
@@ -666,15 +952,13 @@
             qrBtn.addEventListener('click', () => {
                 generateQRCode();
                 qrOverlay.classList.add('active');
-                toggleMenu(false); // Menü schließen
+                toggleMenu(false);
             });
 
-            // QR Code schließen
             qrCloseBtn.addEventListener('click', () => {
                 qrOverlay.classList.remove('active');
             });
 
-            // Bei Klick auf Overlay schließen
             qrOverlay.addEventListener('click', (e) => {
                 if (e.target === qrOverlay) {
                     qrOverlay.classList.remove('active');
@@ -719,18 +1003,15 @@
 
             showHistoryCheck.addEventListener('change', updateHistoryVisibility);
 
-            // Summe anzeigen Button - Jetzt wird die Summe auch zur Historie hinzugefügt!
+            // Summe anzeigen Button
             showSumBtn.addEventListener('click', () => {
                 const sum = calculateSum();
                 sumValueSpan.textContent = sum;
                 sumDisplay.classList.remove('hidden');
                 sumVisible = true;
-                
-                // Auch bei Button-Klick zur Historie hinzufügen
                 addHistoryEntry(sum);
             });
 
-            // Summe ausblenden
             function hideSum() {
                 if (sumVisible) {
                     sumDisplay.classList.add('hidden');
@@ -754,14 +1035,17 @@
                             cell.classList.add('active');
                         }
 
-                        // Doppelklick-Event
                         cell.addEventListener('click', handleDoubleTap);
                         
                         gridContainer.appendChild(cell);
                     }
                 }
-                // Summe verstecken bei neuem Render (Figur wurde bewegt)
                 hideSum();
+                
+                // Discovery Panel aktualisieren wenn sichtbar
+                if (showDiscoveriesCheck.checked) {
+                    updateDiscoveries();
+                }
             }
 
             // Doppelklick-Erkennung
@@ -769,16 +1053,13 @@
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTapTime;
                 
-                // Prüfen ob auf aktiver Zelle
                 const isActiveCell = e.target.classList.contains('active');
                 
                 if (tapLength < 300 && tapLength > 0 && lastTapTarget === e.target && isActiveCell) {
-                    // Doppelklick erkannt
                     const sum = calculateSum();
                     alert(`🎯 Aktuelle Summe: ${sum}`);
                     addHistoryEntry(sum);
                     
-                    // Visuelles Feedback
                     e.target.style.transform = 'scale(1.15)';
                     e.target.style.backgroundColor = '#f1c40f';
                     setTimeout(() => {
@@ -789,7 +1070,6 @@
                     lastTapTime = 0;
                     lastTapTarget = null;
                 } else {
-                    // Erster Tap
                     lastTapTime = currentTime;
                     lastTapTarget = e.target;
                 }
@@ -817,10 +1097,23 @@
                     const c = newCol + dcc;
                     return r >= 0 && r < rows && c >= 0 && c < cols;
                 });
+                
                 if (anyInside) {
+                    // Bewegungsrichtung speichern für Entdeckungen
+                    if (dr !== 0 || dc !== 0) {
+                        if (dr === 1 && dc === 0) lastMoveDirection = 'down';
+                        else if (dr === -1 && dc === 0) lastMoveDirection = 'up';
+                        else if (dr === 0 && dc === 1) lastMoveDirection = 'right';
+                        else if (dr === 0 && dc === -1) lastMoveDirection = 'left';
+                        else if (dr === 1 && dc === 1) lastMoveDirection = 'down-right';
+                        else if (dr === -1 && dc === -1) lastMoveDirection = 'up-left';
+                        
+                        moveCount++;
+                    }
+                    
                     figurePos.row = newRow;
                     figurePos.col = newCol;
-                    renderGrid(); // renderGrid ruft hideSum() auf
+                    renderGrid();
                 }
             }
 
@@ -835,7 +1128,6 @@
                 if (historySums.length === 0) {
                     historyList.innerHTML = '<li class="empty-history">Noch keine Summen</li>';
                 } else {
-                    // Neueste Einträge zuerst anzeigen
                     historySums.slice().reverse().forEach((s, index) => {
                         const li = document.createElement('li');
                         li.className = 'history-item';
@@ -848,8 +1140,8 @@
             // Event Listener
             figureSelect.addEventListener('change', (e) => {
                 currentFigure = e.target.value;
+                moveCount = 0; // Bewegungszähler zurücksetzen
                 renderGrid();
-                // Menü automatisch schließen
                 setTimeout(() => toggleMenu(false), 300);
             });
 
@@ -867,7 +1159,7 @@
                 }
             });
 
-            // Touch-Steuerung (Wischen)
+            // Touch-Steuerung
             let touchStart = null;
             gridContainer.addEventListener('touchstart', (e) => {
                 touchStart = {
@@ -895,14 +1187,11 @@
 
             // Initialisierung
             showHistoryCheck.checked = false;
+            showDiscoveriesCheck.checked = false;
             updateHistoryVisibility();
             
             renderGrid();
             updateHistoryList();
-
-            // Test-Einträge für die Historie (können bei Bedarf aktiviert werden)
-            // addHistoryEntry(238);
-            // addHistoryEntry(206);
         })();
     </script>
 </body>
