@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Mit Entdeckungen</title>
+    <title>Tetris Summen - Mit echten Entdeckungen</title>
     <style>
         * {
             box-sizing: border-box;
@@ -49,7 +49,7 @@
             gap: 12px;
         }
 
-        /* Zahlenfeld - nimmt maximalen Platz ein */
+        /* Zahlenfeld */
         .grid-wrapper {
             width: 100%;
             flex: 1;
@@ -103,7 +103,24 @@
             text-shadow: none;
         }
 
-        /* Discovery Panel - wird über dem Grid eingeblendet */
+        /* Rotations-Hinweis */
+        .rotation-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #2a5f7a;
+            border: 2px solid #f39c12;
+            border-radius: 40px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            backdrop-filter: blur(4px);
+            z-index: 800;
+            box-shadow: 0 5px 0 #1a3f52;
+        }
+
+        /* Discovery Panel */
         .discovery-panel {
             position: absolute;
             top: 20px;
@@ -200,6 +217,7 @@
             font-size: 1rem;
             border: 1px solid #5fa3c0;
             color: #b3e5fc;
+            white-space: pre-wrap;
         }
 
         .discovery-tip {
@@ -211,7 +229,31 @@
             color: #ffd966;
         }
 
-        /* Unterer Bereich mit Button und Summenanzeige */
+        .discovery-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .level-basis {
+            background: #27ae60;
+            color: white;
+        }
+
+        .level-mittel {
+            background: #e67e22;
+            color: white;
+        }
+
+        .level-stark {
+            background: #c0392b;
+            color: white;
+        }
+
+        /* Unterer Bereich */
         .bottom-bar {
             width: 100%;
             display: flex;
@@ -251,7 +293,6 @@
             box-shadow: 0 1px 0 #083349;
         }
 
-        /* Summen-Anzeige (neben dem Button) */
         .sum-display-bottom {
             background: #073642;
             border: 3px solid #f39c12;
@@ -332,7 +373,6 @@
             transform: rotate(-45deg) translate(8px, -8px);
         }
 
-        /* Overlay für Menü-Hintergrund */
         .menu-overlay {
             position: absolute;
             top: 0;
@@ -353,7 +393,6 @@
             pointer-events: auto;
         }
 
-        /* Hamburger Menü */
         .hamburger-menu {
             position: absolute;
             top: 0;
@@ -377,7 +416,6 @@
             left: 0;
         }
 
-        /* Menü-Elemente */
         .menu-section {
             background: rgba(0, 0, 0, 0.25);
             border-radius: 30px;
@@ -437,7 +475,6 @@
             margin-bottom: 10px;
         }
 
-        /* QR Code Button im Menü */
         .qr-btn {
             background: #2a5f7a;
             border: none;
@@ -473,7 +510,6 @@
             fill: white;
         }
 
-        /* QR Code Overlay */
         .qr-overlay {
             position: absolute;
             top: 0;
@@ -590,7 +626,6 @@
             font-style: italic;
         }
 
-        /* Footer-Hinweis */
         .footer-hint {
             position: absolute;
             bottom: 10px;
@@ -607,7 +642,7 @@
             pointer-events: none;
         }
     </style>
-    <!-- QRCode.js Bibliothek einbinden -->
+    <!-- QRCode.js Bibliothek -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 </head>
 <body>
@@ -633,6 +668,9 @@
                     <option value="L">📐 L-Form</option>
                     <option value="J">↪️ J-Form</option>
                 </select>
+                <div style="color: #f39c12; font-size: 0.9rem; margin-top: 10px; text-align: center;">
+                    ↻ Tippe auf Figur zum Rotieren
+                </div>
             </div>
 
             <div class="menu-section">
@@ -666,15 +704,13 @@
             </div>
         </div>
 
-        <!-- Discovery Panel (Entdeckungen) -->
+        <!-- Discovery Panel -->
         <div class="discovery-panel hidden" id="discoveryPanel">
             <div class="discovery-header">
                 <h3>🔍 Mathematische Entdeckungen</h3>
                 <button class="discovery-close" id="discoveryClose">✕</button>
             </div>
-            <div class="discovery-content" id="discoveryContent">
-                <!-- Wird dynamisch befüllt -->
-            </div>
+            <div class="discovery-content" id="discoveryContent"></div>
         </div>
 
         <!-- QR Code Overlay -->
@@ -692,9 +728,10 @@
         <!-- Zahlenfeld -->
         <div class="grid-wrapper">
             <div class="number-grid" id="numberGrid"></div>
+            <div class="rotation-hint">↻ Tippen = rotieren</div>
         </div>
 
-        <!-- Untere Leiste mit Button und Summenanzeige -->
+        <!-- Untere Leiste -->
         <div class="bottom-bar">
             <button class="sum-button" id="showSumBtn">
                 <span>🔢</span> Summe anzeigen
@@ -717,29 +754,82 @@
             const rows = 10, cols = 10;
             const grid = [];
             let currentFigure = 'O';
+            let currentRotation = 0; // 0, 1, 2, 3 für 90°-Schritte
             let figurePos = { row: 4, col: 4 };
             let historySums = [];
             let lastTapTime = 0;
             let lastTapTarget = null;
             let sumVisible = false;
-            let lastMoveDirection = null;
             let moveCount = 0;
 
+            // Figuren-Definitionen mit allen Rotationen
             const figures = {
-                I: [[0,0], [0,1], [0,2], [0,3]],
-                O: [[0,0], [0,1], [1,0], [1,1]],
-                T: [[0,0], [0,1], [0,2], [1,1]],
-                L: [[0,0], [1,0], [2,0], [2,1]],
-                J: [[0,1], [1,1], [2,1], [2,0]]
+                I: {
+                    0: [[0,0], [0,1], [0,2], [0,3]], // horizontal
+                    1: [[0,0], [1,0], [2,0], [3,0]], // vertikal
+                    2: [[0,0], [0,1], [0,2], [0,3]], // 180° = horizontal
+                    3: [[0,0], [1,0], [2,0], [3,0]]  // 270° = vertikal
+                },
+                O: {
+                    0: [[0,0], [0,1], [1,0], [1,1]], // Quadrat (alle Rotationen gleich)
+                    1: [[0,0], [0,1], [1,0], [1,1]],
+                    2: [[0,0], [0,1], [1,0], [1,1]],
+                    3: [[0,0], [0,1], [1,0], [1,1]]
+                },
+                T: {
+                    0: [[0,0], [0,1], [0,2], [1,1]], // T zeigt nach unten
+                    1: [[0,1], [1,0], [1,1], [2,1]], // T zeigt nach rechts
+                    2: [[1,0], [1,1], [1,2], [0,1]], // T zeigt nach oben
+                    3: [[0,0], [1,0], [1,1], [2,0]]  // T zeigt nach links
+                },
+                L: {
+                    0: [[0,0], [1,0], [2,0], [2,1]], // L zeigt nach rechts-unten
+                    1: [[0,2], [1,0], [1,1], [1,2]], // L gedreht
+                    2: [[0,1], [0,2], [1,2], [2,2]], // L zeigt nach links-oben
+                    3: [[0,0], [0,1], [0,2], [1,0]]  // L gedreht
+                },
+                J: {
+                    0: [[0,1], [1,1], [2,1], [2,0]], // J zeigt nach links-unten
+                    1: [[0,0], [1,0], [1,1], [1,2]], // J gedreht
+                    2: [[0,0], [0,1], [1,0], [2,0]], // J zeigt nach rechts-oben
+                    3: [[0,0], [0,1], [0,2], [1,2]]  // J gedreht
+                }
             };
 
-            // Figuren-Namen für Anzeige
+            // Figuren-Namen
             const figureNames = {
                 I: "I-Balken",
                 O: "O-Quadrat",
                 T: "T-Form",
                 L: "L-Form",
                 J: "J-Form"
+            };
+
+            // Basis-Summen für Position (0,0)
+            const baseSums = {
+                I: 10,   // 1+2+3+4
+                O: 26,   // 1+2+11+12
+                T: 18,   // 1+2+3+12
+                L: 55,   // 1+11+21+22
+                J: 57    // 2+12+22+21
+            };
+
+            // Parität (gerade/ungerade)
+            const parity = {
+                I: "gerade",
+                O: "gerade",
+                T: "gerade",
+                L: "ungerade",
+                J: "ungerade"
+            };
+
+            // Modulo 4 Restklassen
+            const modulo4 = {
+                I: 2,
+                O: 2,
+                T: 2,
+                L: 3,
+                J: 1
             };
 
             // Grid befüllen (1-100)
@@ -763,119 +853,173 @@
             const discoveryContent = document.getElementById('discoveryContent');
             const discoveryClose = document.getElementById('discoveryClose');
             
-            // Hamburger Menü Elemente
+            // Hamburger Menü
             const hamburgerBtn = document.getElementById('hamburgerBtn');
             const hamburgerMenu = document.getElementById('hamburgerMenu');
             const menuOverlay = document.getElementById('menuOverlay');
             
-            // QR Code Elemente
+            // QR Code
             const qrBtn = document.getElementById('qrBtn');
             const qrOverlay = document.getElementById('qrOverlay');
             const qrCloseBtn = document.getElementById('qrCloseBtn');
             const qrCanvas = document.getElementById('qrCanvas');
 
-            // Entdeckungen basierend auf Figur und Bewegung generieren
-            function generateDiscoveries() {
-                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
-                const sum = calculateSum();
-                const cellCount = cells.length;
+            // Maximale Position für vollständige Figur berechnen
+            function getMaxValidPosition(figType, rotation) {
+                const offsets = figures[figType][rotation];
+                const maxRow = Math.max(...offsets.map(o => o[0]));
+                const maxCol = Math.max(...offsets.map(o => o[1]));
                 
-                let discoveries = [];
-
-                // Allgemeine Entdeckungen (für alle Figuren)
-                discoveries.push({
-                    title: "📐 Über diese Figur",
-                    text: `Du hast die **${figureNames[currentFigure]}** gewählt. Sie bedeckt **${cellCount} Zellen**.`,
-                    example: `Aktuelle Position: ${cells.map(c => grid[c.row][c.col]).join(' + ')} = ${sum}`
-                });
-
-                // Bewegungs-Entdeckungen
-                discoveries.push({
-                    title: "⬆️⬇️ Vertikale Bewegung (nach oben/unten)",
-                    text: `Bewegst du die Figur **eine Zeile nach unten**, erhöht sich jede Zahl um **+10**.`,
-                    example: `Die Summe ändert sich um **+${cellCount * 10}** (${cellCount} Zellen × 10)`,
-                    tip: `Probiere aus: Drücke ↓ und beobachte, wie die Summe steigt!`
-                });
-
-                discoveries.push({
-                    title: "⬅️➡️ Horizontale Bewegung (nach links/rechts)",
-                    text: `Bewegst du die Figur **eine Spalte nach rechts**, erhöht sich jede Zahl um **+1**.`,
-                    example: `Die Summe ändert sich um **+${cellCount}** (${cellCount} Zellen × 1)`,
-                    tip: `Probiere aus: Drücke → und beobachte, wie die Summe steigt!`
-                });
-
-                discoveries.push({
-                    title: "↘️ Diagonale Bewegung",
-                    text: `Bewegst du die Figur **diagonal** (nach rechts-unten), erhöht sich jede Zahl um **+11**.`,
-                    example: `Die Summe ändert sich um **+${cellCount * 11}** (${cellCount} Zellen × 11)`,
-                    tip: `Das ist die Kombination aus +10 (runter) und +1 (rechts)!`
-                });
-
-                // Figuren-spezifische Entdeckungen
-                if (currentFigure === 'O') {
-                    discoveries.push({
-                        title: "🎯 Besonderheit des O-Quadrats",
-                        text: `Das 2x2-Quadrat hat eine interessante Eigenschaft:`,
-                        example: `Oben links: 1+2+11+12 = 26\nUnten rechts: 89+90+99+100 = 378\nDifferenz: 352`,
-                        tip: `Alle Summen des O-Quadrats sind **gerade Zahlen**!`
-                    });
-                }
-
-                if (currentFigure === 'I') {
-                    discoveries.push({
-                        title: "📏 Besonderheit des I-Balkens",
-                        text: `Der I-Balken kann horizontal oder vertikal ausgerichtet sein.`,
-                        example: `Horizontal (Zeile 1): 1+2+3+4 = 10\nVertikal (Spalte 1): 1+11+21+31 = 64`,
-                        tip: `Die **Ausrichtung** macht einen riesigen Unterschied (hier 54)!`
-                    });
-                }
-
-                if (currentFigure === 'T') {
-                    discoveries.push({
-                        title: "🔺 Besonderheit der T-Form",
-                        text: `Die T-Form hat eine asymmetrische Verteilung.`,
-                        example: `Die untere Zelle (Mitte) ist oft viel größer als die oberen drei.`,
-                        tip: `Vergleiche: 1+2+3+12 = 18 vs. 91+92+93+100 = 376`
-                    });
-                }
-
-                // Extremwert-Entdeckungen
-                const minSum = getMinSumForFigure(currentFigure);
-                const maxSum = getMaxSumForFigure(currentFigure);
-                
-                discoveries.push({
-                    title: "📊 Extremwerte",
-                    text: `Mit dieser Figur kannst du folgende Summen erreichen:`,
-                    example: `Kleinste Summe: **${minSum}** (oben links)\nGrößte Summe: **${maxSum}** (unten rechts)`,
-                    tip: `Die Spannweite beträgt **${maxSum - minSum}**!`
-                });
-
-                // Muster-Entdeckung
-                discoveries.push({
-                    title: "🧮 Mathematisches Muster",
-                    text: `Bei **${moveCount} Bewegungen** in dieselbe Richtung:`,
-                    example: `${moveCount} × nach rechts: +${moveCount * cellCount}\n${moveCount} × nach unten: +${moveCount * cellCount * 10}`,
-                    tip: `Die Summe ändert sich **gleichmäßig** - das ist eine lineare Funktion!`
-                });
-
-                return discoveries;
+                return {
+                    row: rows - 1 - maxRow,
+                    col: cols - 1 - maxCol
+                };
             }
 
-            // Hilfsfunktion für Minimal-Summe
-            function getMinSumForFigure(figType) {
-                const cells = getFigureCells(figType, 0, 0);
+            // Minimale Summe (oben links) berechnen
+            function getMinSumForFigure(figType, rotation) {
+                const offsets = figures[figType][rotation];
+                const cells = offsets.map(([dr, dc]) => ({
+                    row: dr,
+                    col: dc
+                }));
                 return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
             }
 
-            // Hilfsfunktion für Maximal-Summe
-            function getMaxSumForFigure(figType) {
-                const cells = getFigureCells(figType, 9, 9);
-                return cells.reduce((acc, {row, col}) => {
-                    // Korrigiere falls außerhalb
-                    const r = Math.min(row, 9);
-                    const c = Math.min(col, 9);
-                    return acc + grid[r][c];
-                }, 0);
+            // Maximale Summe (unten rechts) berechnen
+            function getMaxSumForFigure(figType, rotation) {
+                const maxPos = getMaxValidPosition(figType, rotation);
+                const offsets = figures[figType][rotation];
+                const cells = offsets.map(([dr, dc]) => ({
+                    row: maxPos.row + dr,
+                    col: maxPos.col + dc
+                }));
+                return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
+            }
+
+            // Anzahl gültiger Positionen
+            function getValidPositionCount(figType, rotation) {
+                const maxPos = getMaxValidPosition(figType, rotation);
+                return (maxPos.row + 1) * (maxPos.col + 1);
+            }
+
+            // Entdeckungen generieren
+            function generateDiscoveries() {
+                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col, currentRotation);
+                const sum = calculateSum();
+                const cellCount = cells.length; // Kann am Rand weniger sein
+                const fullCellCount = 4; // Alle Figuren haben 4 Zellen
+                
+                const maxPos = getMaxValidPosition(currentFigure, currentRotation);
+                const minSum = getMinSumForFigure(currentFigure, currentRotation);
+                const maxSum = getMaxSumForFigure(currentFigure, currentRotation);
+                const validPositions = getValidPositionCount(currentFigure, currentRotation);
+                
+                let discoveries = [];
+
+                // BASIS-ENTDECKUNGEN (Niveau 1)
+                discoveries.push({
+                    level: "Basis",
+                    title: "📐 Grundlegende Eigenschaften",
+                    text: `Du hast die **${figureNames[currentFigure]}** gewählt. Sie bedeckt **4 Zellen**.`,
+                    example: `Aktuelle Summe: ${cells.map(c => grid[c.row][c.col]).join(' + ')} = **${sum}**`,
+                    tip: `Jede Figur besteht aus genau 4 Kästchen - das sind Tetrominos!`
+                });
+
+                // BASIS: Bewegungsregeln
+                discoveries.push({
+                    level: "Basis",
+                    title: "⬆️⬇️⬅️➡️ Bewegungsregeln",
+                    text: `**Wichtige Regel:** Solange die Figur vollständig im Feld ist:`,
+                    example: `1 Schritt nach **rechts**: Summe +4\n1 Schritt nach **links**: Summe -4\n1 Schritt nach **unten**: Summe +40\n1 Schritt nach **oben**: Summe -40`,
+                    tip: `Die Änderung hängt NUR von der Anzahl Zellen ab (4), nicht von der Form!`
+                });
+
+                // MITTEL: Summenformel
+                discoveries.push({
+                    level: "Mittel",
+                    title: "🧮 Lineare Summenformel",
+                    text: `Für die ${figureNames[currentFigure]} gibt es eine einfache Formel:`,
+                    example: `S = **${baseSums[currentFigure]}** + 40·r + 4·c\n(r = Zeilen nach unten, c = Spalten nach rechts)`,
+                    tip: `Du kannst die Summe vorhersagen, ohne neu zu rechnen!`
+                });
+
+                // MITTEL: Extremwerte
+                discoveries.push({
+                    level: "Mittel",
+                    title: "📊 Kleinste und größte Summe",
+                    text: `Die ${figureNames[currentFigure]} kann an **${validPositions}** verschiedenen Positionen platziert werden.`,
+                    example: `🔹 Kleinste Summe (oben links): **${minSum}**\n🔹 Größte Summe (unten rechts): **${maxSum}**\n🔹 Spannweite: **${maxSum - minSum}**`,
+                    tip: `Versuche, die Figur ganz nach unten rechts zu schieben!`
+                });
+
+                // MITTEL: Parität (gerade/ungerade)
+                discoveries.push({
+                    level: "Mittel",
+                    title: "🟢🟠 Gerade oder ungerade?",
+                    text: `Die ${figureNames[currentFigure]} ist **immer ${parity[currentFigure]}**.`,
+                    example: `Aktuelle Summe ${sum} ist ${sum % 2 === 0 ? 'gerade' : 'ungerade'}.`,
+                    tip: `Das bleibt so, egal wie du die Figur verschiebst!`
+                });
+
+                // STARK: Modulo 4 Restklassen
+                discoveries.push({
+                    level: "Stark",
+                    title: "🔢 Nur bestimmte Summen sind möglich",
+                    text: `Weil sich die Summe immer um Vielfache von 4 ändert, sind nur bestimmte Zahlen erreichbar.`,
+                    example: `Die ${figureNames[currentFigure]} liefert nur Summen der Form:\n**4k + ${modulo4[currentFigure]}**\n(also ${modulo4[currentFigure]} mod 4)`,
+                    tip: `Probiere: 26, 30, 34, 38, ... - nie 27 oder 29!`
+                });
+
+                // STARK: Arithmetische Folgen
+                discoveries.push({
+                    level: "Stark",
+                    title: "📈 Arithmetische Folgen",
+                    text: `Schiebst du die Figur nur nach rechts, entsteht eine arithmetische Folge:`,
+                    example: `Beispiel O-Quadrat:\n26, 30, 34, 38, 42, ...\n(immer +4)`,
+                    tip: `In der nächsten Zeile kommt jeweils +40 dazu.`
+                });
+
+                // STARK: Figurenvergleich
+                if (currentFigure === 'O' || currentFigure === 'T' || currentFigure === 'I') {
+                    discoveries.push({
+                        level: "Stark",
+                        title: "⚖️ Figuren im Vergleich",
+                        text: `Verschiedene Figuren am selben Ankerpunkt haben feste Differenzen:`,
+                        example: `O = T + 8\nO = I + 16\nT = I + 8`,
+                        tip: `Diese Differenzen bleiben immer gleich!`
+                    });
+                }
+
+                if (currentFigure === 'L' || currentFigure === 'J') {
+                    discoveries.push({
+                        level: "Stark",
+                        title: "⚖️ Figuren im Vergleich",
+                        text: `L und J sind Spiegelbilder:`,
+                        example: `L = 55 + 40r + 4c\nJ = 57 + 40r + 4c\nJ = L + 2`,
+                        tip: `Der Unterschied ist immer genau 2!`
+                    });
+                }
+
+                // Rotations-Entdeckungen (für nicht-O Figuren)
+                if (currentFigure !== 'O') {
+                    const otherRotation = (currentRotation + 1) % 4;
+                    const rotatedCells = getFigureCells(currentFigure, figurePos.row, figurePos.col, otherRotation);
+                    
+                    if (rotatedCells.length === 4) { // Nur wenn Rotation vollständig möglich
+                        const rotatedSum = rotatedCells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
+                        
+                        discoveries.push({
+                            level: "Stark",
+                            title: "↻ Rotationseffekte",
+                            text: `Drehen verändert die Summe, weil sich die Zellen anders anordnen.`,
+                            example: `Aktuelle Ausrichtung: **${sum}**\nGedreht: **${rotatedSum}**\nDifferenz: **${rotatedSum - sum}**`,
+                            tip: `Probier's aus: Tippe auf die Figur zum Drehen!`
+                        });
+                    }
+                }
+
+                return discoveries;
             }
 
             // Discovery Panel aktualisieren
@@ -884,9 +1028,13 @@
                 
                 let html = '';
                 discoveries.forEach(d => {
+                    const levelClass = d.level === 'Basis' ? 'level-basis' : (d.level === 'Mittel' ? 'level-mittel' : 'level-stark');
                     html += `
                         <div class="discovery-section">
-                            <div class="discovery-title">${d.title}</div>
+                            <div class="discovery-title">
+                                <span class="discovery-level ${levelClass}">${d.level}</span>
+                                ${d.title}
+                            </div>
                             <div class="discovery-text">${d.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
                             <div class="discovery-example">${d.example.replace(/\n/g, '<br>')}</div>
                             ${d.tip ? `<div class="discovery-tip">💡 ${d.tip}</div>` : ''}
@@ -897,7 +1045,7 @@
                 discoveryContent.innerHTML = html;
             }
 
-            // Discovery Panel ein-/ausblenden
+            // Panel ein-/ausblenden
             function toggleDiscoveryPanel(show) {
                 if (show === undefined) {
                     if (showDiscoveriesCheck.checked) {
@@ -923,32 +1071,14 @@
                 discoveryPanel.classList.add('hidden');
             });
 
-            // QR Code generieren
+            // QR Code
             function generateQRCode() {
                 const url = 'https://alexgpunkt.github.io/TetrisRechner/';
-                
-                QRCode.toCanvas(qrCanvas, url, {
-                    width: 250,
-                    margin: 2,
-                    color: {
-                        dark: '#000000',
-                        light: '#ffffff'
-                    }
-                }, function(error) {
-                    if (error) {
-                        console.error('Fehler beim Generieren des QR-Codes:', error);
-                        qrCanvas.getContext('2d').clearRect(0, 0, 250, 250);
-                        qrCanvas.getContext('2d').fillStyle = '#ffffff';
-                        qrCanvas.getContext('2d').fillRect(0, 0, 250, 250);
-                        qrCanvas.getContext('2d').fillStyle = '#000000';
-                        qrCanvas.getContext('2d').font = '16px Arial';
-                        qrCanvas.getContext('2d').textAlign = 'center';
-                        qrCanvas.getContext('2d').fillText(url, 125, 125);
-                    }
+                QRCode.toCanvas(qrCanvas, url, { width: 250, margin: 2 }, function(error) {
+                    if (error) console.error(error);
                 });
             }
 
-            // QR Code anzeigen
             qrBtn.addEventListener('click', () => {
                 generateQRCode();
                 qrOverlay.classList.add('active');
@@ -960,12 +1090,10 @@
             });
 
             qrOverlay.addEventListener('click', (e) => {
-                if (e.target === qrOverlay) {
-                    qrOverlay.classList.remove('active');
-                }
+                if (e.target === qrOverlay) qrOverlay.classList.remove('active');
             });
 
-            // Hamburger Menü Toggle
+            // Menü Toggle
             function toggleMenu(show) {
                 if (show === undefined) {
                     hamburgerBtn.classList.toggle('active');
@@ -991,19 +1119,14 @@
                 toggleMenu(false);
             });
 
-            // History Sichtbarkeit
+            // History
             function updateHistoryVisibility() {
                 const historySection = document.getElementById('historySection');
-                if (showHistoryCheck.checked) {
-                    historySection.style.display = 'block';
-                } else {
-                    historySection.style.display = 'none';
-                }
+                historySection.style.display = showHistoryCheck.checked ? 'block' : 'none';
             }
-
             showHistoryCheck.addEventListener('change', updateHistoryVisibility);
 
-            // Summe anzeigen Button
+            // Summe anzeigen
             showSumBtn.addEventListener('click', () => {
                 const sum = calculateSum();
                 sumValueSpan.textContent = sum;
@@ -1019,6 +1142,31 @@
                 }
             }
 
+            // Figur drehen
+            function rotateFigure() {
+                const newRotation = (currentRotation + 1) % 4;
+                // Prüfen ob Rotation möglich (alle Zellen im Feld)
+                const offsets = figures[currentFigure][newRotation];
+                const allInside = offsets.every(([dr, dc]) => {
+                    const r = figurePos.row + dr;
+                    const c = figurePos.col + dc;
+                    return r >= 0 && r < rows && c >= 0 && c < cols;
+                });
+                
+                if (allInside) {
+                    currentRotation = newRotation;
+                    renderGrid();
+                    
+                    // Discovery Panel aktualisieren wenn sichtbar
+                    if (showDiscoveriesCheck.checked) {
+                        updateDiscoveries();
+                    }
+                    
+                    return true;
+                }
+                return false;
+            }
+
             // Grid rendern
             function renderGrid() {
                 gridContainer.innerHTML = '';
@@ -1030,32 +1178,32 @@
                         cell.dataset.col = c;
                         cell.textContent = grid[r][c];
 
-                        const figureCells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
+                        const figureCells = getFigureCells(currentFigure, figurePos.row, figurePos.col, currentRotation);
                         if (figureCells.some(cellPos => cellPos.row === r && cellPos.col === c)) {
                             cell.classList.add('active');
                         }
 
-                        cell.addEventListener('click', handleDoubleTap);
+                        cell.addEventListener('click', handleCellClick);
                         
                         gridContainer.appendChild(cell);
                     }
                 }
                 hideSum();
                 
-                // Discovery Panel aktualisieren wenn sichtbar
                 if (showDiscoveriesCheck.checked) {
                     updateDiscoveries();
                 }
             }
 
-            // Doppelklick-Erkennung
-            function handleDoubleTap(e) {
+            // Klick auf Zelle (für Rotation)
+            function handleCellClick(e) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTapTime;
                 
                 const isActiveCell = e.target.classList.contains('active');
                 
                 if (tapLength < 300 && tapLength > 0 && lastTapTarget === e.target && isActiveCell) {
+                    // Doppelklick = Summe speichern
                     const sum = calculateSum();
                     alert(`🎯 Aktuelle Summe: ${sum}`);
                     addHistoryEntry(sum);
@@ -1069,14 +1217,24 @@
                     
                     lastTapTime = 0;
                     lastTapTarget = null;
+                } else if (isActiveCell && tapLength < 200) {
+                    // Einfacher Klick auf aktive Zelle = Rotation (aber kein Doppelklick)
+                    // Kleine Verzögerung, um Doppelklick nicht zu stören
+                    setTimeout(() => {
+                        if (lastTapTime !== 0) return; // Wurde inzwischen doppelgeklickt
+                        rotateFigure();
+                    }, 250);
+                    
+                    lastTapTime = currentTime;
+                    lastTapTarget = e.target;
                 } else {
                     lastTapTime = currentTime;
                     lastTapTarget = e.target;
                 }
             }
 
-            function getFigureCells(figType, r0, c0) {
-                const offsets = figures[figType] || figures.O;
+            function getFigureCells(figType, r0, c0, rot = 0) {
+                const offsets = figures[figType][rot] || figures[figType][0];
                 return offsets.map(([dr, dc]) => ({
                     row: r0 + dr,
                     col: c0 + dc
@@ -1084,14 +1242,14 @@
             }
 
             function calculateSum() {
-                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
+                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col, currentRotation);
                 return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
             }
 
             function moveFigure(dr, dc) {
                 const newRow = figurePos.row + dr;
                 const newCol = figurePos.col + dc;
-                const offsets = figures[currentFigure];
+                const offsets = figures[currentFigure][currentRotation];
                 const anyInside = offsets.some(([drr, dcc]) => {
                     const r = newRow + drr;
                     const c = newCol + dcc;
@@ -1099,18 +1257,6 @@
                 });
                 
                 if (anyInside) {
-                    // Bewegungsrichtung speichern für Entdeckungen
-                    if (dr !== 0 || dc !== 0) {
-                        if (dr === 1 && dc === 0) lastMoveDirection = 'down';
-                        else if (dr === -1 && dc === 0) lastMoveDirection = 'up';
-                        else if (dr === 0 && dc === 1) lastMoveDirection = 'right';
-                        else if (dr === 0 && dc === -1) lastMoveDirection = 'left';
-                        else if (dr === 1 && dc === 1) lastMoveDirection = 'down-right';
-                        else if (dr === -1 && dc === -1) lastMoveDirection = 'up-left';
-                        
-                        moveCount++;
-                    }
-                    
                     figurePos.row = newRow;
                     figurePos.col = newCol;
                     renderGrid();
@@ -1140,12 +1286,13 @@
             // Event Listener
             figureSelect.addEventListener('change', (e) => {
                 currentFigure = e.target.value;
-                moveCount = 0; // Bewegungszähler zurücksetzen
+                currentRotation = 0; // Rotation zurücksetzen
+                moveCount = 0;
                 renderGrid();
                 setTimeout(() => toggleMenu(false), 300);
             });
 
-            // Tastatur-Steuerung
+            // Tastatur
             window.addEventListener('keydown', (e) => {
                 const key = e.key;
                 if (key.startsWith('Arrow')) {
@@ -1156,10 +1303,13 @@
                         case 'ArrowLeft': moveFigure(0, -1); break;
                         case 'ArrowRight': moveFigure(0, 1); break;
                     }
+                } else if (key === 'r' || key === 'R') {
+                    e.preventDefault();
+                    rotateFigure();
                 }
             });
 
-            // Touch-Steuerung
+            // Touch-Steuerung (Wischen)
             let touchStart = null;
             gridContainer.addEventListener('touchstart', (e) => {
                 touchStart = {
