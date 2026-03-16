@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tetris Summen - Mit GitHub Link</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #0a1a24;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #1d3a4a, #0b1e2b);
+            touch-action: none;
+            padding: 8px;
+        }
+
+        /* Hauptcontainer */
+        .game-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            gap: 12px;
+        }
+
+        /* Zahlenfeld - nimmt maximalen Platz ein */
+        .grid-wrapper {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d2c3b;
+            border-radius: 48px;
+            padding: 16px;
+            border: 4px solid #398ead;
+            box-shadow: inset 0 0 30px #000000cc;
+            min-height: 0;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: clamp(2px, 1vw, 6px);
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: min(85vh, 85vw);
+            max-height: min(85vh, 85vw);
+            margin: 0 auto;
+        }
+
+        .grid-cell {
+            background: #1f4e62;
+            border-radius: clamp(6px, 1.5vw, 14px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.9rem, 4.5vw, 2.2rem);
+            font-weight: 800;
+            color: #eef9ff;
+            box-shadow: 0 -3px 0 #0d303e, 0 4px 8px black;
+            border: 1px solid #60b5d6;
+            touch-action: none;
+            transition: all 0.1s ease;
+            cursor: pointer;
+            text-shadow: 0 2px 2px black;
+        }
+
+        .grid-cell.active {
+            background: radial-gradient(circle at 30% 30%, #ffe28a, #e67e22);
+            color: #111;
+            box-shadow: 0 0 25px #f39c12, 0 -3px 0 #b8570e;
+            border-color: white;
+            transform: scale(1.02);
+            text-shadow: none;
+        }
+
+        /* Unterer Bereich mit Button und Summenanzeige */
+        .bottom-bar {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            border: 2px solid #3b7a94;
+            margin-top: auto;
+        }
+
+        .sum-button {
+            background: #26648b;
+            border: none;
+            border-bottom: 5px solid #0f3b55;
+            padding: 16px 30px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 6px 0 #083349;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sum-button:active {
+            transform: translateY(5px);
+            border-bottom-width: 2px;
+            box-shadow: 0 1px 0 #083349;
+        }
+
+        /* Summen-Anzeige (neben dem Button) */
+        .sum-display-bottom {
+            background: #073642;
+            border: 3px solid #f39c12;
+            border-radius: 50px;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 6px 0 #05262e;
+            transition: all 0.3s ease;
+        }
+
+        .sum-display-bottom.hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+        }
+
+        .sum-display-bottom .sum-label {
+            color: #f39c12;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .sum-display-bottom .sum-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #f7e05e;
+            min-width: 80px;
+            text-align: right;
+            text-shadow: 0 2px 0 #a7580e;
+        }
+
+        /* Hamburger Button */
+        .hamburger-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 60px;
+            height: 60px;
+            background: #1e4a5a;
+            border: 3px solid #4fa3c9;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 8px 0 #0d3645, 0 5px 15px black;
+            transition: all 0.1s ease;
+            touch-action: manipulation;
+        }
+
+        .hamburger-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #0d3645, 0 5px 15px black;
+        }
+
+        .hamburger-btn span {
+            width: 30px;
+            height: 4px;
+            background: white;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+        }
+
+        /* Overlay für Menü-Hintergrund */
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 900;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border-radius: 48px;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Hamburger Menü */
+        .hamburger-menu {
+            position: absolute;
+            top: 0;
+            left: -320px;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(145deg, #1f4454, #12303e);
+            border-radius: 40px 40px 40px 40px;
+            padding: 90px 20px 30px;
+            z-index: 950;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid #4fa3c9;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+        }
+
+        .hamburger-menu.active {
+            left: 0;
+        }
+
+        /* Menü-Elemente */
+        .menu-section {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 30px;
+            padding: 20px 15px;
+            border: 1px solid #5fa3c0;
+        }
+
+        .menu-title {
+            color: #f39c12;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-left: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .menu-item label {
+            flex: 1;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .menu-item input[type="checkbox"] {
+            width: 36px;
+            height: 36px;
+            accent-color: #f39c12;
+            cursor: pointer;
+            border-radius: 12px;
+            transform: scale(1.1);
+        }
+
+        .dropdown {
+            width: 100%;
+            background: #1e4a5a;
+            border: 2px solid #4fa3c9;
+            border-radius: 40px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            color: white;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2380deea' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 4px solid #0d3645;
+            margin-bottom: 10px;
+        }
+
+        /* GitHub Button im Menü */
+        .github-btn {
+            background: #24292e;
+            border: none;
+            border-bottom: 5px solid #0f1a20;
+            padding: 16px 25px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 6px 0 #0f1a20;
+            cursor: pointer;
+            width: 100%;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.1s ease;
+            text-decoration: none;
+            border: 2px solid #6e5494;
+            margin-top: 10px;
+        }
+
+        .github-btn:active {
+            transform: translateY(5px);
+            border-bottom-width: 2px;
+            box-shadow: 0 1px 0 #0f1a20;
+        }
+
+        .github-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1a3e4e;
+            border-radius: 25px;
+            padding: 10px;
+        }
+
+        .history-item {
+            background: #266077;
+            border-radius: 30px;
+            padding: 12px 18px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            border-left: 8px solid #f39c12;
+            color: white;
+            font-weight: 600;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 20px;
+            color: #a0d0f0;
+            font-style: italic;
+        }
+
+        /* Footer-Hinweis */
+        .footer-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #a0d0f080;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 800;
+            background: #00000040;
+            padding: 5px 15px;
+            border-radius: 30px;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Hamburger Button -->
+        <div class="hamburger-btn" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Overlay -->
+        <div class="menu-overlay" id="menuOverlay"></div>
+
+        <!-- Hamburger Menü mit GitHub Button -->
+        <div class="hamburger-menu" id="hamburgerMenu">
+            <div class="menu-section">
+                <div class="menu-title">Figur auswählen</div>
+                <select id="figureSelect" class="dropdown">
+                    <option value="I">🔲 I-Balken (4 lang)</option>
+                    <option value="O" selected>🟨 O-Quadrat (2x2)</option>
+                    <option value="T">🔺 T-Form</option>
+                    <option value="L">📐 L-Form</option>
+                    <option value="J">↪️ J-Form</option>
+                </select>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-title">Anzeige</div>
+                <div class="menu-item">
+                    <label for="showHistory">Historie anzeigen</label>
+                    <input type="checkbox" id="showHistory">
+                </div>
+            </div>
+
+            <div class="menu-section" id="historySection">
+                <div class="menu-title">Verlauf</div>
+                <ul class="history-list" id="historyList">
+                    <li class="empty-history">Noch keine Summen</li>
+                </ul>
+            </div>
+
+            <!-- GitHub Button -->
+            <div class="menu-section">
+                <div class="menu-title">Links</div>
+                <button class="github-btn" id="githubBtn">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12c0-5.523-4.477-10-10-10z"/>
+                    </svg>
+                    GitHub Repository
+                </button>
+            </div>
+        </div>
+
+        <!-- Zahlenfeld -->
+        <div class="grid-wrapper">
+            <div class="number-grid" id="numberGrid"></div>
+        </div>
+
+        <!-- Untere Leiste mit Button und Summenanzeige -->
+        <div class="bottom-bar">
+            <button class="sum-button" id="showSumBtn">
+                <span>🔢</span> Summe anzeigen
+            </button>
+            <div class="sum-display-bottom hidden" id="sumDisplay">
+                <span class="sum-label">Summe</span>
+                <span class="sum-value" id="sumValue">0</span>
+            </div>
+        </div>
+
+        <div class="footer-hint">Doppelklick auf Figur = Summe speichern • Pfeile / Wischen</div>
+    </div>
+
+    <script>
+        (function() {
+            // Verhindert Scrollen
+            document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            
+            // Grid 10x10
+            const rows = 10, cols = 10;
+            const grid = [];
+            let currentFigure = 'O';
+            let figurePos = { row: 4, col: 4 };
+            let historySums = [];
+            let lastTapTime = 0;
+            let lastTapTarget = null;
+            let sumVisible = false;
+
+            const figures = {
+                I: [[0,0], [0,1], [0,2], [0,3]],
+                O: [[0,0], [0,1], [1,0], [1,1]],
+                T: [[0,0], [0,1], [0,2], [1,1]],
+                L: [[0,0], [1,0], [2,0], [2,1]],
+                J: [[0,1], [1,1], [2,1], [2,0]]
+            };
+
+            // Grid befüllen (1-100)
+            for (let r = 0; r < rows; r++) {
+                grid[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    grid[r][c] = r * cols + c + 1;
+                }
+            }
+
+            // DOM Elemente
+            const gridContainer = document.getElementById('numberGrid');
+            const figureSelect = document.getElementById('figureSelect');
+            const sumDisplay = document.getElementById('sumDisplay');
+            const sumValueSpan = document.getElementById('sumValue');
+            const showSumBtn = document.getElementById('showSumBtn');
+            const historyList = document.getElementById('historyList');
+            const showHistoryCheck = document.getElementById('showHistory');
+            
+            // Hamburger Menü Elemente
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
+            
+            // GitHub Button
+            const githubBtn = document.getElementById('githubBtn');
+
+            // GitHub Button Funktion
+            githubBtn.addEventListener('click', () => {
+                // Hier die GitHub-URL einfügen, wenn das Projekt gehostet wird
+                // Aktuell öffnet es die GitHub Startseite als Platzhalter
+                window.open('https://github.com', '_blank');
+                // Menü schließen
+                toggleMenu(false);
+            });
+
+            // Hamburger Menü Toggle
+            function toggleMenu(show) {
+                if (show === undefined) {
+                    hamburgerBtn.classList.toggle('active');
+                    hamburgerMenu.classList.toggle('active');
+                    menuOverlay.classList.toggle('active');
+                } else if (show) {
+                    hamburgerBtn.classList.add('active');
+                    hamburgerMenu.classList.add('active');
+                    menuOverlay.classList.add('active');
+                } else {
+                    hamburgerBtn.classList.remove('active');
+                    hamburgerMenu.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                }
+            }
+
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMenu();
+            });
+
+            menuOverlay.addEventListener('click', () => {
+                toggleMenu(false);
+            });
+
+            // History Sichtbarkeit
+            showHistoryCheck.addEventListener('change', (e) => {
+                const historySection = document.getElementById('historySection');
+                if (e.target.checked) {
+                    historySection.style.display = 'block';
+                } else {
+                    historySection.style.display = 'none';
+                }
+            });
+
+            // Summe anzeigen Button
+            showSumBtn.addEventListener('click', () => {
+                const sum = calculateSum();
+                sumValueSpan.textContent = sum;
+                sumDisplay.classList.remove('hidden');
+                sumVisible = true;
+            });
+
+            // Summe ausblenden
+            function hideSum() {
+                if (sumVisible) {
+                    sumDisplay.classList.add('hidden');
+                    sumVisible = false;
+                }
+            }
+
+            // Grid rendern
+            function renderGrid() {
+                gridContainer.innerHTML = '';
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.textContent = grid[r][c];
+
+                        const figureCells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
+                        if (figureCells.some(cellPos => cellPos.row === r && cellPos.col === c)) {
+                            cell.classList.add('active');
+                        }
+
+                        // Doppelklick-Event
+                        cell.addEventListener('click', handleDoubleTap);
+                        
+                        gridContainer.appendChild(cell);
+                    }
+                }
+                // Summe verstecken bei neuem Render (Figur wurde bewegt)
+                hideSum();
+            }
+
+            // Doppelklick-Erkennung
+            function handleDoubleTap(e) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
+                
+                // Prüfen ob auf aktiver Zelle
+                const isActiveCell = e.target.classList.contains('active');
+                
+                if (tapLength < 300 && tapLength > 0 && lastTapTarget === e.target && isActiveCell) {
+                    // Doppelklick erkannt
+                    const sum = calculateSum();
+                    alert(`🎯 Aktuelle Summe: ${sum}`);
+                    addHistoryEntry(sum);
+                    
+                    // Visuelles Feedback
+                    e.target.style.transform = 'scale(1.15)';
+                    e.target.style.backgroundColor = '#f1c40f';
+                    setTimeout(() => {
+                        e.target.style.transform = '';
+                        e.target.style.backgroundColor = '';
+                    }, 200);
+                    
+                    lastTapTime = 0;
+                    lastTapTarget = null;
+                } else {
+                    // Erster Tap
+                    lastTapTime = currentTime;
+                    lastTapTarget = e.target;
+                }
+            }
+
+            function getFigureCells(figType, r0, c0) {
+                const offsets = figures[figType] || figures.O;
+                return offsets.map(([dr, dc]) => ({
+                    row: r0 + dr,
+                    col: c0 + dc
+                })).filter(cell => cell.row >= 0 && cell.row < rows && cell.col >= 0 && cell.col < cols);
+            }
+
+            function calculateSum() {
+                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col);
+                return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
+            }
+
+            function moveFigure(dr, dc) {
+                const newRow = figurePos.row + dr;
+                const newCol = figurePos.col + dc;
+                const offsets = figures[currentFigure];
+                const anyInside = offsets.some(([drr, dcc]) => {
+                    const r = newRow + drr;
+                    const c = newCol + dcc;
+                    return r >= 0 && r < rows && c >= 0 && c < cols;
+                });
+                if (anyInside) {
+                    figurePos.row = newRow;
+                    figurePos.col = newCol;
+                    renderGrid(); // renderGrid ruft hideSum() auf
+                }
+            }
+
+            function addHistoryEntry(sum) {
+                historySums.push(sum);
+                if (historySums.length > 15) historySums.shift();
+                updateHistoryList();
+            }
+
+            function updateHistoryList() {
+                historyList.innerHTML = '';
+                if (historySums.length === 0) {
+                    historyList.innerHTML = '<li class="empty-history">Noch keine Summen</li>';
+                } else {
+                    historySums.slice().reverse().forEach((s, i) => {
+                        const li = document.createElement('li');
+                        li.className = 'history-item';
+                        li.textContent = `Summe ${historySums.length - i}: ${s}`;
+                        historyList.appendChild(li);
+                    });
+                }
+            }
+
+            // Event Listener
+            figureSelect.addEventListener('change', (e) => {
+                currentFigure = e.target.value;
+                renderGrid(); // renderGrid ruft hideSum() auf
+                // Menü automatisch schließen
+                setTimeout(() => toggleMenu(false), 300);
+            });
+
+            // Tastatur-Steuerung
+            window.addEventListener('keydown', (e) => {
+                const key = e.key;
+                if (key.startsWith('Arrow')) {
+                    e.preventDefault();
+                    switch (key) {
+                        case 'ArrowUp': moveFigure(-1, 0); break;
+                        case 'ArrowDown': moveFigure(1, 0); break;
+                        case 'ArrowLeft': moveFigure(0, -1); break;
+                        case 'ArrowRight': moveFigure(0, 1); break;
+                    }
+                }
+            });
+
+            // Touch-Steuerung (Wischen)
+            let touchStart = null;
+            gridContainer.addEventListener('touchstart', (e) => {
+                touchStart = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY
+                };
+            }, { passive: false });
+
+            gridContainer.addEventListener('touchend', (e) => {
+                if (!touchStart) return;
+                const dx = e.changedTouches[0].clientX - touchStart.x;
+                const dy = e.changedTouches[0].clientY - touchStart.y;
+                const minDist = 30;
+                
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > minDist) {
+                    if (dx > 0) moveFigure(0, 1);
+                    else moveFigure(0, -1);
+                } else if (Math.abs(dy) > minDist) {
+                    if (dy > 0) moveFigure(1, 0);
+                    else moveFigure(-1, 0);
+                }
+                touchStart = null;
+                e.preventDefault();
+            }, { passive: false });
+
+            // Initialisierung
+            showHistoryCheck.checked = false;
+            document.getElementById('historySection').style.display = 'none';
+            
+            renderGrid();
+            updateHistoryList();
+        })();
+    </script>
+</body>
+</html>
