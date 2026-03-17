@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Mit echten Entdeckungen</title>
+    <title>Tetris Summen - Prozentuales Layout</title>
     <style>
         * {
             box-sizing: border-box;
@@ -33,336 +33,123 @@
             justify-content: center;
             background: radial-gradient(circle at 50% 50%, #1d3a4a, #0b1e2b);
             touch-action: none;
-            padding: 8px;
+            padding: 0;
+            position: relative;
+        }
+
+        /* Floating Partikel */
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            opacity: 0.4;
+        }
+
+        .float-number {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.05);
+            font-size: clamp(1.2rem, 6vw, 3rem);
+            font-weight: 800;
+            white-space: nowrap;
+            animation: float 25s infinite linear;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .float-tetris {
+            position: absolute;
+            color: rgba(243, 156, 18, 0.06);
+            font-size: clamp(1.5rem, 8vw, 4rem);
+            animation: float 30s infinite linear;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.2;
+            }
+            90% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         /* Hauptcontainer */
         .game-container {
             width: 100%;
-            height: 100%;
-            max-width: 1200px;
+            height: 100vh; /* Volle Viewport-Höhe */
+            max-width: 480px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
             position: relative;
-            gap: 12px;
-        }
-
-        /* Zahlenfeld */
-        .grid-wrapper {
-            width: 100%;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0d2c3b;
-            border-radius: 48px;
-            padding: 16px;
-            border: 4px solid #398ead;
-            box-shadow: inset 0 0 30px #000000cc;
-            min-height: 0;
-            position: relative;
-        }
-
-        .number-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: clamp(2px, 1vw, 6px);
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 1 / 1;
-            max-width: min(85vh, 85vw);
-            max-height: min(85vh, 85vw);
             margin: 0 auto;
-        }
-
-        .grid-cell {
-            background: #1f4e62;
-            border-radius: clamp(6px, 1.5vw, 14px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(0.9rem, 4.5vw, 2.2rem);
-            font-weight: 800;
-            color: #eef9ff;
-            box-shadow: 0 -3px 0 #0d303e, 0 4px 8px black;
-            border: 1px solid #60b5d6;
-            touch-action: none;
-            transition: all 0.1s ease;
-            cursor: pointer;
-            text-shadow: 0 2px 2px black;
-        }
-
-        .grid-cell.active {
-            background: radial-gradient(circle at 30% 30%, #ffe28a, #e67e22);
-            color: #111;
-            box-shadow: 0 0 25px #f39c12, 0 -3px 0 #b8570e;
-            border-color: white;
-            transform: scale(1.02);
-            text-shadow: none;
-        }
-
-        /* Rotations-Hinweis */
-        .rotation-hint {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: #2a5f7a;
-            border: 2px solid #f39c12;
-            border-radius: 40px;
-            padding: 10px 20px;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9rem;
+            z-index: 10;
+            background: rgba(10, 26, 36, 0.7);
             backdrop-filter: blur(4px);
-            z-index: 800;
-            box-shadow: 0 5px 0 #1a3f52;
+            border-left: 1px solid rgba(243, 156, 18, 0.15);
+            border-right: 1px solid rgba(243, 156, 18, 0.15);
+            padding: 0;
         }
 
-        /* Discovery Panel */
-        .discovery-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            border: 3px solid #f39c12;
-            border-radius: 40px;
-            padding: 20px 25px;
-            color: white;
-            z-index: 1100;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            transition: all 0.3s ease;
-            max-height: 70vh;
-            overflow-y: auto;
-            pointer-events: auto;
-        }
-
-        .discovery-panel.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-20px);
-        }
-
-        .discovery-header {
+        /* Header - 10% der Höhe */
+        .mobile-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #f39c12;
-            padding-bottom: 10px;
-        }
-
-        .discovery-header h3 {
-            font-size: 1.4rem;
-            color: #f39c12;
-            flex: 1;
-        }
-
-        .discovery-close {
-            width: 40px;
-            height: 40px;
-            background: #ff6b6b;
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 0 #b33f3f;
-        }
-
-        .discovery-close:active {
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-
-        .discovery-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .discovery-section {
-            background: #1a3e4e;
-            border-radius: 30px;
-            padding: 15px;
-            border-left: 8px solid #f39c12;
-        }
-
-        .discovery-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #f39c12;
-            margin-bottom: 10px;
-        }
-
-        .discovery-text {
-            font-size: 1rem;
-            line-height: 1.5;
-            color: #e0f0ff;
-            margin-bottom: 10px;
-        }
-
-        .discovery-example {
-            background: #0f2a33;
-            border-radius: 25px;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 1rem;
-            border: 1px solid #5fa3c0;
-            color: #b3e5fc;
-            white-space: pre-wrap;
-        }
-
-        .discovery-tip {
-            background: #f39c1220;
-            border-radius: 25px;
-            padding: 10px 15px;
-            font-size: 0.95rem;
-            border-left: 4px solid #f39c12;
-            color: #ffd966;
-        }
-
-        .discovery-level {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-
-        .level-basis {
-            background: #27ae60;
-            color: white;
-        }
-
-        .level-mittel {
-            background: #e67e22;
-            color: white;
-        }
-
-        .level-stark {
-            background: #c0392b;
-            color: white;
-        }
-
-        /* Unterer Bereich */
-        .bottom-bar {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(8px);
-            border-radius: 60px;
-            border: 2px solid #3b7a94;
-            margin-top: auto;
-        }
-
-        .sum-button {
-            background: #26648b;
-            border: none;
-            border-bottom: 5px solid #0f3b55;
-            padding: 16px 30px;
-            border-radius: 50px;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: white;
-            box-shadow: 0 6px 0 #083349;
-            cursor: pointer;
-            touch-action: manipulation;
-            min-width: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .sum-button:active {
-            transform: translateY(5px);
-            border-bottom-width: 2px;
-            box-shadow: 0 1px 0 #083349;
-        }
-
-        .sum-display-bottom {
-            background: #073642;
-            border: 3px solid #f39c12;
-            border-radius: 50px;
-            padding: 12px 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 6px 0 #05262e;
-            transition: all 0.3s ease;
-        }
-
-        .sum-display-bottom.hidden {
-            opacity: 0;
-            transform: scale(0.9);
-            pointer-events: none;
-        }
-
-        .sum-display-bottom .sum-label {
-            color: #f39c12;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-
-        .sum-display-bottom .sum-value {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: #f7e05e;
-            min-width: 80px;
-            text-align: right;
-            text-shadow: 0 2px 0 #a7580e;
-        }
-
-        /* Hamburger Button */
-        .hamburger-btn {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            width: 60px;
-            height: 60px;
-            background: #1e4a5a;
-            border: 3px solid #4fa3c9;
-            border-radius: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            z-index: 20;
+            height: 10vh;
+            min-height: 60px;
+            max-height: 80px;
             gap: 8px;
+            background: rgba(10, 26, 36, 0.5);
+            border-bottom: 1px solid rgba(243, 156, 18, 0.2);
+        }
+
+        .hamburger-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(30, 74, 90, 0.9);
+            border: 2px solid #4fa3c9;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
             cursor: pointer;
-            z-index: 1000;
-            box-shadow: 0 8px 0 #0d3645, 0 5px 15px black;
+            box-shadow: 0 4px 0 #0d3645, 0 3px 8px black;
             transition: all 0.1s ease;
-            touch-action: manipulation;
+            flex-shrink: 0;
         }
 
         .hamburger-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 3px 0 #0d3645, 0 5px 15px black;
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0d3645, 0 3px 8px black;
         }
 
         .hamburger-btn span {
-            width: 30px;
-            height: 4px;
+            width: 25px;
+            height: 3px;
             background: white;
-            border-radius: 4px;
-            transition: all 0.3s ease;
+            border-radius: 3px;
         }
 
         .hamburger-btn.active span:nth-child(1) {
-            transform: rotate(45deg) translate(8px, 8px);
+            transform: rotate(45deg) translate(6px, 6px);
         }
 
         .hamburger-btn.active span:nth-child(2) {
@@ -370,9 +157,226 @@
         }
 
         .hamburger-btn.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(8px, -8px);
+            transform: rotate(-45deg) translate(6px, -6px);
         }
 
+        /* Historie oben rechts - nur sichtbar wenn aktiviert */
+        .history-top {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(7, 54, 66, 0.8);
+            border-radius: 30px;
+            padding: 6px 12px;
+            border: 2px solid #f39c12;
+            backdrop-filter: blur(4px);
+            height: 50px;
+            min-width: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .history-top.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .history-top-item {
+            background: rgba(38, 96, 119, 0.9);
+            border-radius: 20px;
+            padding: 6px 8px;
+            color: #f7e05e;
+            font-weight: 700;
+            font-size: 1rem;
+            border-left: 3px solid #f39c12;
+            box-shadow: 0 2px 0 #0d303e;
+            flex: 1;
+            text-align: center;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-top-item.empty {
+            background: rgba(38, 96, 119, 0.4);
+            color: #a0d0f0;
+            border-left: 3px solid #4fa3c9;
+        }
+
+        .history-top-label {
+            color: #f39c12;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* Temporäre Summen-Anzeige */
+        .sum-display-header {
+            background: rgba(7, 54, 66, 0.95);
+            border: 2px solid #f39c12;
+            border-radius: 30px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 0 #05262e, 0 3px 8px rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            height: 50px;
+            position: absolute;
+            top: calc(10vh + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+        }
+
+        .sum-display-header.hidden {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.9);
+            pointer-events: none;
+        }
+
+        .sum-display-header .sum-label {
+            color: #f39c12;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sum-display-header .sum-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #f7e05e;
+            min-width: 50px;
+            text-align: right;
+            text-shadow: 0 2px 0 #a7580e;
+        }
+
+        /* Zahlenfeld - 80% der Höhe */
+        .grid-wrapper {
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(13, 44, 59, 0.8);
+            border-radius: 0;
+            padding: 10px;
+            margin: 0;
+            border-top: 2px solid rgba(57, 142, 173, 0.5);
+            border-bottom: 2px solid rgba(57, 142, 173, 0.5);
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 80vh;
+        }
+
+        .grid-cell {
+            background: rgba(31, 78, 98, 0.95);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.7rem, 3.5vh, 1.6rem);
+            font-weight: 700;
+            color: #eef9ff;
+            box-shadow: 0 -1px 0 #0d303e, 0 1px 3px black;
+            border: 1px solid #60b5d6;
+            touch-action: none;
+            transition: all 0.1s ease;
+            cursor: pointer;
+            text-shadow: 0 1px 1px black;
+        }
+
+        .grid-cell.active {
+            background: radial-gradient(circle at 30% 30%, #ffe28a, #e67e22);
+            color: #111;
+            box-shadow: 0 0 12px #f39c12, 0 -1px 0 #b8570e;
+            border-color: white;
+            transform: scale(1.02);
+            text-shadow: none;
+        }
+
+        /* Footer - 10% der Höhe */
+        .mobile-footer {
+            height: 10vh;
+            min-height: 60px;
+            max-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(10, 26, 36, 0.5);
+            border-top: 1px solid rgba(243, 156, 18, 0.2);
+        }
+
+        .action-button {
+            flex: 1;
+            height: 100%;
+            background: rgba(38, 100, 139, 0.95);
+            border: 2px solid #f39c12;
+            border-radius: 30px;
+            padding: 0 10px;
+            color: white;
+            font-weight: 700;
+            font-size: clamp(0.9rem, 2vh, 1.2rem);
+            box-shadow: 0 5px 0 #0f3b55;
+            cursor: pointer;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.1s ease;
+        }
+
+        .action-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #0f3b55;
+        }
+
+        .action-button.rotate {
+            background: rgba(42, 95, 122, 0.95);
+            box-shadow: 0 5px 0 #1a3f52;
+        }
+
+        .action-button span {
+            font-size: clamp(1.2rem, 3vh, 1.8rem);
+        }
+
+        /* Discovery Panel */
+        .discovery-panel {
+            position: absolute;
+            top: calc(10vh + 10px);
+            left: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(12px);
+            border: 2px solid #f39c12;
+            border-radius: 25px;
+            padding: 14px;
+            color: white;
+            z-index: 1100;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+            max-height: 65vh;
+            overflow-y: auto;
+        }
+
+        .discovery-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+        }
+
+        /* Menü Overlay */
         .menu-overlay {
             position: absolute;
             top: 0;
@@ -385,7 +389,6 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            border-radius: 48px;
         }
 
         .menu-overlay.active {
@@ -393,120 +396,117 @@
             pointer-events: auto;
         }
 
+        /* Hamburger Menü - unsichtbar wenn nicht aktiv */
         .hamburger-menu {
             position: absolute;
             top: 0;
-            left: -320px;
-            width: 280px;
+            left: -280px;
+            width: 260px;
             height: 100%;
             background: linear-gradient(145deg, #1f4454, #12303e);
-            border-radius: 40px 40px 40px 40px;
-            padding: 90px 20px 30px;
+            border-radius: 0 25px 25px 0;
+            padding: 12vh 15px 20px;
             z-index: 950;
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px solid #4fa3c9;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            border: 2px solid #4fa3c9;
+            border-left: none;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 15px;
             overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .hamburger-menu.active {
             left: 0;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .menu-section {
             background: rgba(0, 0, 0, 0.25);
-            border-radius: 30px;
-            padding: 20px 15px;
+            border-radius: 18px;
+            padding: 12px 10px;
             border: 1px solid #5fa3c0;
         }
 
         .menu-title {
             color: #f39c12;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             padding-left: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 12px;
             color: white;
             font-weight: 500;
+            font-size: 0.95rem;
         }
 
         .menu-item label {
             flex: 1;
-            font-size: 1.1rem;
             cursor: pointer;
         }
 
         .menu-item input[type="checkbox"] {
-            width: 36px;
-            height: 36px;
+            width: 26px;
+            height: 26px;
             accent-color: #f39c12;
             cursor: pointer;
-            border-radius: 12px;
-            transform: scale(1.1);
+            border-radius: 8px;
         }
 
         .dropdown {
             width: 100%;
             background: #1e4a5a;
             border: 2px solid #4fa3c9;
-            border-radius: 40px;
-            padding: 15px 20px;
-            font-size: 1.1rem;
+            border-radius: 25px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
             color: white;
             appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2380deea' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2380deea' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
             background-repeat: no-repeat;
-            background-position: right 15px center;
+            background-position: right 12px center;
             font-weight: 600;
             cursor: pointer;
-            border-bottom: 4px solid #0d3645;
-            margin-bottom: 10px;
+            border-bottom: 3px solid #0d3645;
         }
 
         .qr-btn {
             background: #2a5f7a;
             border: none;
-            border-bottom: 5px solid #1a3f52;
-            padding: 16px 25px;
-            border-radius: 50px;
-            font-size: 1.2rem;
+            border-bottom: 3px solid #1a3f52;
+            padding: 12px 16px;
+            border-radius: 30px;
+            font-size: 0.95rem;
             font-weight: 700;
             color: white;
-            box-shadow: 0 6px 0 #1a3f52;
+            box-shadow: 0 3px 0 #1a3f52;
             cursor: pointer;
             width: 100%;
-            touch-action: manipulation;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            transition: all 0.1s ease;
-            text-decoration: none;
-            border: 2px solid #f39c12;
-            margin-top: 10px;
+            gap: 8px;
+            border: 1px solid #f39c12;
         }
 
         .qr-btn:active {
-            transform: translateY(5px);
-            border-bottom-width: 2px;
+            transform: translateY(3px);
             box-shadow: 0 1px 0 #1a3f52;
         }
 
         .qr-btn svg {
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             fill: white;
         }
 
@@ -523,8 +523,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            border-radius: 48px;
+            padding: 16px;
         }
 
         .qr-overlay.active {
@@ -533,144 +532,140 @@
 
         .qr-container {
             background: white;
-            padding: 30px;
-            border-radius: 50px;
+            padding: 16px;
+            border-radius: 25px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px;
+            gap: 12px;
             max-width: 90%;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
         .qr-code {
-            width: 250px;
-            height: 250px;
+            width: 180px;
+            height: 180px;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 30px;
+            border-radius: 15px;
         }
 
         #qrCanvas {
             width: 100%;
             height: 100%;
-            border-radius: 20px;
+            border-radius: 12px;
         }
 
         .qr-title {
             color: #333;
-            font-size: 1.4rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            text-align: center;
         }
 
         .qr-url {
             color: #f39c12;
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 600;
             word-break: break-all;
             text-align: center;
             background: #f0f0f0;
-            padding: 10px 20px;
-            border-radius: 40px;
+            padding: 6px 12px;
+            border-radius: 25px;
         }
 
         .qr-close-btn {
             background: #26648b;
             border: none;
-            border-bottom: 5px solid #0f3b55;
-            padding: 16px 40px;
-            border-radius: 50px;
-            font-size: 1.2rem;
+            border-bottom: 3px solid #0f3b55;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 0.95rem;
             font-weight: 700;
             color: white;
-            box-shadow: 0 6px 0 #083349;
+            box-shadow: 0 3px 0 #083349;
             cursor: pointer;
             width: 100%;
-            touch-action: manipulation;
         }
 
         .qr-close-btn:active {
-            transform: translateY(5px);
-            border-bottom-width: 2px;
+            transform: translateY(3px);
             box-shadow: 0 1px 0 #083349;
         }
 
         .history-list {
             list-style: none;
-            max-height: 200px;
+            max-height: 140px;
             overflow-y: auto;
             background: #1a3e4e;
-            border-radius: 25px;
-            padding: 10px;
+            border-radius: 16px;
+            padding: 6px;
         }
 
         .history-item {
             background: #266077;
-            border-radius: 30px;
-            padding: 12px 18px;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-            border-left: 8px solid #f39c12;
+            border-radius: 16px;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+            border-left: 5px solid #f39c12;
             color: white;
             font-weight: 600;
-            word-break: break-word;
         }
 
         .empty-history {
             text-align: center;
-            padding: 20px;
+            padding: 12px;
             color: #a0d0f0;
             font-style: italic;
-        }
-
-        .footer-hint {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #a0d0f080;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            z-index: 800;
-            background: #00000040;
-            padding: 5px 15px;
-            border-radius: 30px;
-            backdrop-filter: blur(4px);
-            pointer-events: none;
+            font-size: 0.9rem;
         }
     </style>
     <!-- QRCode.js Bibliothek -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 </head>
 <body>
+    <!-- Floating Partikel -->
+    <div class="floating-particles" id="floatingParticles"></div>
+
     <div class="game-container">
-        <!-- Hamburger Button -->
-        <div class="hamburger-btn" id="hamburgerBtn">
-            <span></span>
-            <span></span>
-            <span></span>
+        <!-- Header - 10% Höhe -->
+        <div class="mobile-header">
+            <div class="hamburger-btn" id="hamburgerBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- Historie oben rechts (optional, nur sichtbar wenn aktiviert) -->
+            <div class="history-top hidden" id="historyTop">
+                <span class="history-top-label">Letzte:</span>
+                <div class="history-top-item empty" id="historyTop1">-</div>
+                <div class="history-top-item empty" id="historyTop2">-</div>
+                <div class="history-top-item empty" id="historyTop3">-</div>
+            </div>
+        </div>
+
+        <!-- Temporäre Summen-Anzeige -->
+        <div class="sum-display-header hidden" id="sumDisplay">
+            <span class="sum-label">Summe</span>
+            <span class="sum-value" id="sumValue">0</span>
         </div>
 
         <!-- Overlay -->
         <div class="menu-overlay" id="menuOverlay"></div>
 
-        <!-- Hamburger Menü -->
+        <!-- Hamburger Menü (unsichtbar wenn nicht aktiv) -->
         <div class="hamburger-menu" id="hamburgerMenu">
             <div class="menu-section">
                 <div class="menu-title">Figur auswählen</div>
                 <select id="figureSelect" class="dropdown">
-                    <option value="I">🔲 I-Balken (4 lang)</option>
-                    <option value="O" selected>🟨 O-Quadrat (2x2)</option>
+                    <option value="I">🔲 I-Balken</option>
+                    <option value="O" selected>🟨 O-Quadrat</option>
                     <option value="T">🔺 T-Form</option>
                     <option value="L">📐 L-Form</option>
                     <option value="J">↪️ J-Form</option>
                 </select>
-                <div style="color: #f39c12; font-size: 0.9rem; margin-top: 10px; text-align: center;">
-                    ↻ Tippe auf Figur zum Rotieren
-                </div>
             </div>
 
             <div class="menu-section">
@@ -680,13 +675,13 @@
                     <input type="checkbox" id="showHistory">
                 </div>
                 <div class="menu-item">
-                    <label for="showDiscoveries">🔍 Entdeckungen anzeigen</label>
+                    <label for="showDiscoveries">🔍 Entdeckungen</label>
                     <input type="checkbox" id="showDiscoveries">
                 </div>
             </div>
 
             <div class="menu-section" id="historySection">
-                <div class="menu-title">Verlauf</div>
+                <div class="menu-title">Verlauf (alle)</div>
                 <ul class="history-list" id="historyList">
                     <li class="empty-history">Noch keine Summen</li>
                 </ul>
@@ -696,10 +691,10 @@
             <div class="menu-section">
                 <div class="menu-title">Teilen</div>
                 <button class="qr-btn" id="qrBtn">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 24 24">
                         <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm-2 8h8v8H3v-8zm2 2v4h4v-4H5zm8-10h8v8h-8V3zm2 2v4h4V5h-4zm4 10h2v2h-2v-2zm-6 0h4v2h-2v2h-2v-4zm2-4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm6-2h2v2h-2v-2zm-8 6h2v2h-2v-2zm6-2h2v2h-2v-2z"/>
                     </svg>
-                    QR Code anzeigen
+                    QR Code
                 </button>
             </div>
         </div>
@@ -707,7 +702,7 @@
         <!-- Discovery Panel -->
         <div class="discovery-panel hidden" id="discoveryPanel">
             <div class="discovery-header">
-                <h3>🔍 Mathematische Entdeckungen</h3>
+                <h3>🔍 Entdeckungen</h3>
                 <button class="discovery-close" id="discoveryClose">✕</button>
             </div>
             <div class="discovery-content" id="discoveryContent"></div>
@@ -718,35 +713,61 @@
             <div class="qr-container">
                 <div class="qr-title">📱 TetrisRechner</div>
                 <div class="qr-code">
-                    <canvas id="qrCanvas" width="250" height="250"></canvas>
+                    <canvas id="qrCanvas" width="180" height="180"></canvas>
                 </div>
-                <div class="qr-url">https://alexgpunkt.github.io/TetrisRechner/</div>
+                <div class="qr-url">alexgpunkt.github.io/TetrisRechner</div>
                 <button class="qr-close-btn" id="qrCloseBtn">Schließen</button>
             </div>
         </div>
 
-        <!-- Zahlenfeld -->
+        <!-- Zahlenfeld - 80% Höhe -->
         <div class="grid-wrapper">
             <div class="number-grid" id="numberGrid"></div>
-            <div class="rotation-hint">↻ Tippen = rotieren</div>
         </div>
 
-        <!-- Untere Leiste -->
-        <div class="bottom-bar">
-            <button class="sum-button" id="showSumBtn">
-                <span>🔢</span> Summe anzeigen
-            </button>
-            <div class="sum-display-bottom hidden" id="sumDisplay">
-                <span class="sum-label">Summe</span>
-                <span class="sum-value" id="sumValue">0</span>
+        <!-- Footer - 10% Höhe -->
+        <div class="mobile-footer">
+            <div class="action-button rotate" id="rotateBtn">
+                <span>↻</span> Rotieren
+            </div>
+            <div class="action-button" id="showSumBtn">
+                <span>🔢</span> Summe
             </div>
         </div>
-
-        <div class="footer-hint">Doppelklick auf Figur = Summe speichern • Pfeile / Wischen</div>
     </div>
 
     <script>
         (function() {
+            // Floating Partikel erstellen
+            function createFloatingParticles() {
+                const container = document.getElementById('floatingParticles');
+                const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                               '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+                               '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'];
+                
+                const tetrisShapes = ['⬜', '🟨', '🔲'];
+                
+                for (let i = 0; i < 15; i++) {
+                    const element = document.createElement('div');
+                    element.className = 'float-number';
+                    element.textContent = numbers[Math.floor(Math.random() * numbers.length)];
+                    element.style.left = Math.random() * 100 + '%';
+                    element.style.animationDelay = Math.random() * 10 + 's';
+                    element.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+                    container.appendChild(element);
+                }
+                
+                for (let i = 0; i < 8; i++) {
+                    const element = document.createElement('div');
+                    element.className = 'float-tetris';
+                    element.textContent = tetrisShapes[Math.floor(Math.random() * tetrisShapes.length)];
+                    element.style.left = Math.random() * 100 + '%';
+                    element.style.animationDelay = Math.random() * 15 + 's';
+                    element.style.fontSize = (Math.random() * 2.5 + 1.5) + 'rem';
+                    container.appendChild(element);
+                }
+            }
+
             // Verhindert Scrollen
             document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
             
@@ -754,85 +775,56 @@
             const rows = 10, cols = 10;
             const grid = [];
             let currentFigure = 'O';
-            let currentRotation = 0; // 0, 1, 2, 3 für 90°-Schritte
+            let currentRotation = 0;
             let figurePos = { row: 4, col: 4 };
             let historySums = [];
             let lastTapTime = 0;
             let lastTapTarget = null;
             let sumVisible = false;
-            let moveCount = 0;
 
-            // Figuren-Definitionen mit allen Rotationen
+            // Figuren-Definitionen
             const figures = {
                 I: {
-                    0: [[0,0], [0,1], [0,2], [0,3]], // horizontal
-                    1: [[0,0], [1,0], [2,0], [3,0]], // vertikal
-                    2: [[0,0], [0,1], [0,2], [0,3]], // 180° = horizontal
-                    3: [[0,0], [1,0], [2,0], [3,0]]  // 270° = vertikal
+                    0: [[0,0], [0,1], [0,2], [0,3]],
+                    1: [[0,0], [1,0], [2,0], [3,0]],
+                    2: [[0,0], [0,1], [0,2], [0,3]],
+                    3: [[0,0], [1,0], [2,0], [3,0]]
                 },
                 O: {
-                    0: [[0,0], [0,1], [1,0], [1,1]], // Quadrat (alle Rotationen gleich)
+                    0: [[0,0], [0,1], [1,0], [1,1]],
                     1: [[0,0], [0,1], [1,0], [1,1]],
                     2: [[0,0], [0,1], [1,0], [1,1]],
                     3: [[0,0], [0,1], [1,0], [1,1]]
                 },
                 T: {
-                    0: [[0,0], [0,1], [0,2], [1,1]], // T zeigt nach unten
-                    1: [[0,1], [1,0], [1,1], [2,1]], // T zeigt nach rechts
-                    2: [[1,0], [1,1], [1,2], [0,1]], // T zeigt nach oben
-                    3: [[0,0], [1,0], [1,1], [2,0]]  // T zeigt nach links
+                    0: [[0,0], [0,1], [0,2], [1,1]],
+                    1: [[0,1], [1,0], [1,1], [2,1]],
+                    2: [[1,0], [1,1], [1,2], [0,1]],
+                    3: [[0,0], [1,0], [1,1], [2,0]]
                 },
                 L: {
-                    0: [[0,0], [1,0], [2,0], [2,1]], // L zeigt nach rechts-unten
-                    1: [[0,2], [1,0], [1,1], [1,2]], // L gedreht
-                    2: [[0,1], [0,2], [1,2], [2,2]], // L zeigt nach links-oben
-                    3: [[0,0], [0,1], [0,2], [1,0]]  // L gedreht
+                    0: [[0,0], [1,0], [2,0], [2,1]],
+                    1: [[0,2], [1,0], [1,1], [1,2]],
+                    2: [[0,1], [0,2], [1,2], [2,2]],
+                    3: [[0,0], [0,1], [0,2], [1,0]]
                 },
                 J: {
-                    0: [[0,1], [1,1], [2,1], [2,0]], // J zeigt nach links-unten
-                    1: [[0,0], [1,0], [1,1], [1,2]], // J gedreht
-                    2: [[0,0], [0,1], [1,0], [2,0]], // J zeigt nach rechts-oben
-                    3: [[0,0], [0,1], [0,2], [1,2]]  // J gedreht
+                    0: [[0,1], [1,1], [2,1], [2,0]],
+                    1: [[0,0], [1,0], [1,1], [1,2]],
+                    2: [[0,0], [0,1], [1,0], [2,0]],
+                    3: [[0,0], [0,1], [0,2], [1,2]]
                 }
             };
 
-            // Figuren-Namen
             const figureNames = {
-                I: "I-Balken",
-                O: "O-Quadrat",
-                T: "T-Form",
-                L: "L-Form",
-                J: "J-Form"
+                I: "I-Balken", O: "O-Quadrat", T: "T-Form", L: "L-Form", J: "J-Form"
             };
 
-            // Basis-Summen für Position (0,0)
-            const baseSums = {
-                I: 10,   // 1+2+3+4
-                O: 26,   // 1+2+11+12
-                T: 18,   // 1+2+3+12
-                L: 55,   // 1+11+21+22
-                J: 57    // 2+12+22+21
-            };
+            const baseSums = { I: 10, O: 26, T: 18, L: 55, J: 57 };
+            const parity = { I: "gerade", O: "gerade", T: "gerade", L: "ungerade", J: "ungerade" };
+            const modulo4 = { I: 2, O: 2, T: 2, L: 3, J: 1 };
 
-            // Parität (gerade/ungerade)
-            const parity = {
-                I: "gerade",
-                O: "gerade",
-                T: "gerade",
-                L: "ungerade",
-                J: "ungerade"
-            };
-
-            // Modulo 4 Restklassen
-            const modulo4 = {
-                I: 2,
-                O: 2,
-                T: 2,
-                L: 3,
-                J: 1
-            };
-
-            // Grid befüllen (1-100)
+            // Grid befüllen
             for (let r = 0; r < rows; r++) {
                 grid[r] = [];
                 for (let c = 0; c < cols; c++) {
@@ -846,6 +838,7 @@
             const sumDisplay = document.getElementById('sumDisplay');
             const sumValueSpan = document.getElementById('sumValue');
             const showSumBtn = document.getElementById('showSumBtn');
+            const rotateBtn = document.getElementById('rotateBtn');
             const historyList = document.getElementById('historyList');
             const showHistoryCheck = document.getElementById('showHistory');
             const showDiscoveriesCheck = document.getElementById('showDiscoveries');
@@ -853,63 +846,54 @@
             const discoveryContent = document.getElementById('discoveryContent');
             const discoveryClose = document.getElementById('discoveryClose');
             
-            // Hamburger Menü
+            // Elemente für die Historie oben
+            const historyTop = document.getElementById('historyTop');
+            const historyTop1 = document.getElementById('historyTop1');
+            const historyTop2 = document.getElementById('historyTop2');
+            const historyTop3 = document.getElementById('historyTop3');
+            
             const hamburgerBtn = document.getElementById('hamburgerBtn');
             const hamburgerMenu = document.getElementById('hamburgerMenu');
             const menuOverlay = document.getElementById('menuOverlay');
             
-            // QR Code
             const qrBtn = document.getElementById('qrBtn');
             const qrOverlay = document.getElementById('qrOverlay');
             const qrCloseBtn = document.getElementById('qrCloseBtn');
             const qrCanvas = document.getElementById('qrCanvas');
 
-            // Maximale Position für vollständige Figur berechnen
+            // Floating Partikel erstellen
+            createFloatingParticles();
+
+            // Maximale Position
             function getMaxValidPosition(figType, rotation) {
                 const offsets = figures[figType][rotation];
                 const maxRow = Math.max(...offsets.map(o => o[0]));
                 const maxCol = Math.max(...offsets.map(o => o[1]));
-                
-                return {
-                    row: rows - 1 - maxRow,
-                    col: cols - 1 - maxCol
-                };
+                return { row: rows - 1 - maxRow, col: cols - 1 - maxCol };
             }
 
-            // Minimale Summe (oben links) berechnen
             function getMinSumForFigure(figType, rotation) {
                 const offsets = figures[figType][rotation];
-                const cells = offsets.map(([dr, dc]) => ({
-                    row: dr,
-                    col: dc
-                }));
+                const cells = offsets.map(([dr, dc]) => ({ row: dr, col: dc }));
                 return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
             }
 
-            // Maximale Summe (unten rechts) berechnen
             function getMaxSumForFigure(figType, rotation) {
                 const maxPos = getMaxValidPosition(figType, rotation);
                 const offsets = figures[figType][rotation];
-                const cells = offsets.map(([dr, dc]) => ({
-                    row: maxPos.row + dr,
-                    col: maxPos.col + dc
-                }));
+                const cells = offsets.map(([dr, dc]) => ({ row: maxPos.row + dr, col: maxPos.col + dc }));
                 return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
             }
 
-            // Anzahl gültiger Positionen
             function getValidPositionCount(figType, rotation) {
                 const maxPos = getMaxValidPosition(figType, rotation);
                 return (maxPos.row + 1) * (maxPos.col + 1);
             }
 
-            // Entdeckungen generieren
+            // Entdeckungen
             function generateDiscoveries() {
                 const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col, currentRotation);
                 const sum = calculateSum();
-                const cellCount = cells.length; // Kann am Rand weniger sein
-                const fullCellCount = 4; // Alle Figuren haben 4 Zellen
-                
                 const maxPos = getMaxValidPosition(currentFigure, currentRotation);
                 const minSum = getMinSumForFigure(currentFigure, currentRotation);
                 const maxSum = getMaxSumForFigure(currentFigure, currentRotation);
@@ -917,104 +901,67 @@
                 
                 let discoveries = [];
 
-                // BASIS-ENTDECKUNGEN (Niveau 1)
                 discoveries.push({
                     level: "Basis",
-                    title: "📐 Grundlegende Eigenschaften",
-                    text: `Du hast die **${figureNames[currentFigure]}** gewählt. Sie bedeckt **4 Zellen**.`,
-                    example: `Aktuelle Summe: ${cells.map(c => grid[c.row][c.col]).join(' + ')} = **${sum}**`,
-                    tip: `Jede Figur besteht aus genau 4 Kästchen - das sind Tetrominos!`
+                    title: "📐 Grundlegendes",
+                    text: `**${figureNames[currentFigure]}** mit 4 Zellen.`,
+                    example: `Aktuelle Summe: ${cells.map(c => grid[c.row][c.col]).join('+')} = **${sum}**`,
+                    tip: `Jede Figur hat genau 4 Kästchen!`
                 });
 
-                // BASIS: Bewegungsregeln
                 discoveries.push({
                     level: "Basis",
-                    title: "⬆️⬇️⬅️➡️ Bewegungsregeln",
-                    text: `**Wichtige Regel:** Solange die Figur vollständig im Feld ist:`,
-                    example: `1 Schritt nach **rechts**: Summe +4\n1 Schritt nach **links**: Summe -4\n1 Schritt nach **unten**: Summe +40\n1 Schritt nach **oben**: Summe -40`,
-                    tip: `Die Änderung hängt NUR von der Anzahl Zellen ab (4), nicht von der Form!`
+                    title: "⬆️⬇️⬅️➡️ Bewegungen",
+                    text: `Bei vollständiger Figur:`,
+                    example: `→ +4  ← -4\n↓ +40 ↑ -40`,
+                    tip: `Die Änderung ist immer gleich!`
                 });
 
-                // MITTEL: Summenformel
                 discoveries.push({
                     level: "Mittel",
-                    title: "🧮 Lineare Summenformel",
-                    text: `Für die ${figureNames[currentFigure]} gibt es eine einfache Formel:`,
-                    example: `S = **${baseSums[currentFigure]}** + 40·r + 4·c\n(r = Zeilen nach unten, c = Spalten nach rechts)`,
-                    tip: `Du kannst die Summe vorhersagen, ohne neu zu rechnen!`
+                    title: "🧮 Summenformel",
+                    text: `S = **${baseSums[currentFigure]}** + 40·r + 4·c`,
+                    example: `r = Zeilen nach unten\nc = Spalten nach rechts`,
+                    tip: `Damit kannst du Summen vorhersagen!`
                 });
 
-                // MITTEL: Extremwerte
                 discoveries.push({
                     level: "Mittel",
-                    title: "📊 Kleinste und größte Summe",
-                    text: `Die ${figureNames[currentFigure]} kann an **${validPositions}** verschiedenen Positionen platziert werden.`,
-                    example: `🔹 Kleinste Summe (oben links): **${minSum}**\n🔹 Größte Summe (unten rechts): **${maxSum}**\n🔹 Spannweite: **${maxSum - minSum}**`,
-                    tip: `Versuche, die Figur ganz nach unten rechts zu schieben!`
+                    title: "📊 Extremwerte",
+                    text: `${validPositions} mögliche Positionen`,
+                    example: `Min: **${minSum}**\nMax: **${maxSum}**\nDifferenz: **${maxSum - minSum}**`,
+                    tip: `Schiebe ganz nach unten rechts!`
                 });
 
-                // MITTEL: Parität (gerade/ungerade)
                 discoveries.push({
                     level: "Mittel",
-                    title: "🟢🟠 Gerade oder ungerade?",
-                    text: `Die ${figureNames[currentFigure]} ist **immer ${parity[currentFigure]}**.`,
+                    title: "🟢🟠 Gerade/Ungerade",
+                    text: `${figureNames[currentFigure]} ist **immer ${parity[currentFigure]}**.`,
                     example: `Aktuelle Summe ${sum} ist ${sum % 2 === 0 ? 'gerade' : 'ungerade'}.`,
-                    tip: `Das bleibt so, egal wie du die Figur verschiebst!`
+                    tip: `Das ändert sich nie!`
                 });
 
-                // STARK: Modulo 4 Restklassen
                 discoveries.push({
                     level: "Stark",
-                    title: "🔢 Nur bestimmte Summen sind möglich",
-                    text: `Weil sich die Summe immer um Vielfache von 4 ändert, sind nur bestimmte Zahlen erreichbar.`,
-                    example: `Die ${figureNames[currentFigure]} liefert nur Summen der Form:\n**4k + ${modulo4[currentFigure]}**\n(also ${modulo4[currentFigure]} mod 4)`,
-                    tip: `Probiere: 26, 30, 34, 38, ... - nie 27 oder 29!`
+                    title: "🔢 Nur bestimmte Summen",
+                    text: `Form: 4k + ${modulo4[currentFigure]}`,
+                    example: `Also ${modulo4[currentFigure]} mod 4`,
+                    tip: `Z.B. 26, 30, 34... nie 27 oder 29!`
                 });
 
-                // STARK: Arithmetische Folgen
-                discoveries.push({
-                    level: "Stark",
-                    title: "📈 Arithmetische Folgen",
-                    text: `Schiebst du die Figur nur nach rechts, entsteht eine arithmetische Folge:`,
-                    example: `Beispiel O-Quadrat:\n26, 30, 34, 38, 42, ...\n(immer +4)`,
-                    tip: `In der nächsten Zeile kommt jeweils +40 dazu.`
-                });
-
-                // STARK: Figurenvergleich
-                if (currentFigure === 'O' || currentFigure === 'T' || currentFigure === 'I') {
-                    discoveries.push({
-                        level: "Stark",
-                        title: "⚖️ Figuren im Vergleich",
-                        text: `Verschiedene Figuren am selben Ankerpunkt haben feste Differenzen:`,
-                        example: `O = T + 8\nO = I + 16\nT = I + 8`,
-                        tip: `Diese Differenzen bleiben immer gleich!`
-                    });
-                }
-
-                if (currentFigure === 'L' || currentFigure === 'J') {
-                    discoveries.push({
-                        level: "Stark",
-                        title: "⚖️ Figuren im Vergleich",
-                        text: `L und J sind Spiegelbilder:`,
-                        example: `L = 55 + 40r + 4c\nJ = 57 + 40r + 4c\nJ = L + 2`,
-                        tip: `Der Unterschied ist immer genau 2!`
-                    });
-                }
-
-                // Rotations-Entdeckungen (für nicht-O Figuren)
                 if (currentFigure !== 'O') {
                     const otherRotation = (currentRotation + 1) % 4;
                     const rotatedCells = getFigureCells(currentFigure, figurePos.row, figurePos.col, otherRotation);
                     
-                    if (rotatedCells.length === 4) { // Nur wenn Rotation vollständig möglich
+                    if (rotatedCells.length === 4) {
                         const rotatedSum = rotatedCells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
                         
                         discoveries.push({
                             level: "Stark",
-                            title: "↻ Rotationseffekte",
-                            text: `Drehen verändert die Summe, weil sich die Zellen anders anordnen.`,
-                            example: `Aktuelle Ausrichtung: **${sum}**\nGedreht: **${rotatedSum}**\nDifferenz: **${rotatedSum - sum}**`,
-                            tip: `Probier's aus: Tippe auf die Figur zum Drehen!`
+                            title: "↻ Rotation",
+                            text: `Drehen verändert die Summe.`,
+                            example: `Aktuell: **${sum}**\nGedreht: **${rotatedSum}**\nDifferenz: **${rotatedSum - sum}**`,
+                            tip: `Probiere den Rotieren-Button!`
                         });
                     }
                 }
@@ -1022,10 +969,8 @@
                 return discoveries;
             }
 
-            // Discovery Panel aktualisieren
             function updateDiscoveries() {
                 const discoveries = generateDiscoveries();
-                
                 let html = '';
                 discoveries.forEach(d => {
                     const levelClass = d.level === 'Basis' ? 'level-basis' : (d.level === 'Mittel' ? 'level-mittel' : 'level-stark');
@@ -1041,11 +986,9 @@
                         </div>
                     `;
                 });
-                
                 discoveryContent.innerHTML = html;
             }
 
-            // Panel ein-/ausblenden
             function toggleDiscoveryPanel(show) {
                 if (show === undefined) {
                     if (showDiscoveriesCheck.checked) {
@@ -1074,7 +1017,7 @@
             // QR Code
             function generateQRCode() {
                 const url = 'https://alexgpunkt.github.io/TetrisRechner/';
-                QRCode.toCanvas(qrCanvas, url, { width: 250, margin: 2 }, function(error) {
+                QRCode.toCanvas(qrCanvas, url, { width: 180, margin: 2 }, function(error) {
                     if (error) console.error(error);
                 });
             }
@@ -1093,7 +1036,7 @@
                 if (e.target === qrOverlay) qrOverlay.classList.remove('active');
             });
 
-            // Menü Toggle
+            // Menü
             function toggleMenu(show) {
                 if (show === undefined) {
                     hamburgerBtn.classList.toggle('active');
@@ -1119,12 +1062,37 @@
                 toggleMenu(false);
             });
 
-            // History
+            // History Sichtbarkeit und Update
             function updateHistoryVisibility() {
                 const historySection = document.getElementById('historySection');
                 historySection.style.display = showHistoryCheck.checked ? 'block' : 'none';
+                
+                // Obere Historie nur anzeigen wenn Checkbox aktiviert
+                if (showHistoryCheck.checked) {
+                    historyTop.classList.remove('hidden');
+                } else {
+                    historyTop.classList.add('hidden');
+                }
             }
+
             showHistoryCheck.addEventListener('change', updateHistoryVisibility);
+
+            // Update der Historie oben rechts
+            function updateTopHistory() {
+                const lastThree = historySums.slice(-3).reverse();
+                
+                const topElements = [historyTop1, historyTop2, historyTop3];
+                
+                for (let i = 0; i < 3; i++) {
+                    if (i < lastThree.length) {
+                        topElements[i].textContent = lastThree[i];
+                        topElements[i].classList.remove('empty');
+                    } else {
+                        topElements[i].textContent = '-';
+                        topElements[i].classList.add('empty');
+                    }
+                }
+            }
 
             // Summe anzeigen
             showSumBtn.addEventListener('click', () => {
@@ -1133,19 +1101,22 @@
                 sumDisplay.classList.remove('hidden');
                 sumVisible = true;
                 addHistoryEntry(sum);
+                
+                setTimeout(() => {
+                    if (sumVisible) {
+                        sumDisplay.classList.add('hidden');
+                        sumVisible = false;
+                    }
+                }, 4000);
             });
 
-            function hideSum() {
-                if (sumVisible) {
-                    sumDisplay.classList.add('hidden');
-                    sumVisible = false;
-                }
-            }
+            // Rotation per Button
+            rotateBtn.addEventListener('click', () => {
+                rotateFigure();
+            });
 
-            // Figur drehen
             function rotateFigure() {
                 const newRotation = (currentRotation + 1) % 4;
-                // Prüfen ob Rotation möglich (alle Zellen im Feld)
                 const offsets = figures[currentFigure][newRotation];
                 const allInside = offsets.every(([dr, dc]) => {
                     const r = figurePos.row + dr;
@@ -1157,17 +1128,20 @@
                     currentRotation = newRotation;
                     renderGrid();
                     
-                    // Discovery Panel aktualisieren wenn sichtbar
                     if (showDiscoveriesCheck.checked) {
                         updateDiscoveries();
                     }
                     
-                    return true;
+                    const activeCells = document.querySelectorAll('.grid-cell.active');
+                    activeCells.forEach(cell => {
+                        cell.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            cell.style.transform = '';
+                        }, 200);
+                    });
                 }
-                return false;
             }
 
-            // Grid rendern
             function renderGrid() {
                 gridContainer.innerHTML = '';
                 for (let r = 0; r < rows; r++) {
@@ -1188,14 +1162,12 @@
                         gridContainer.appendChild(cell);
                     }
                 }
-                hideSum();
                 
                 if (showDiscoveriesCheck.checked) {
                     updateDiscoveries();
                 }
             }
 
-            // Klick auf Zelle (für Rotation)
             function handleCellClick(e) {
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTapTime;
@@ -1203,7 +1175,6 @@
                 const isActiveCell = e.target.classList.contains('active');
                 
                 if (tapLength < 300 && tapLength > 0 && lastTapTarget === e.target && isActiveCell) {
-                    // Doppelklick = Summe speichern
                     const sum = calculateSum();
                     alert(`🎯 Aktuelle Summe: ${sum}`);
                     addHistoryEntry(sum);
@@ -1217,16 +1188,6 @@
                     
                     lastTapTime = 0;
                     lastTapTarget = null;
-                } else if (isActiveCell && tapLength < 200) {
-                    // Einfacher Klick auf aktive Zelle = Rotation (aber kein Doppelklick)
-                    // Kleine Verzögerung, um Doppelklick nicht zu stören
-                    setTimeout(() => {
-                        if (lastTapTime !== 0) return; // Wurde inzwischen doppelgeklickt
-                        rotateFigure();
-                    }, 250);
-                    
-                    lastTapTime = currentTime;
-                    lastTapTarget = e.target;
                 } else {
                     lastTapTime = currentTime;
                     lastTapTarget = e.target;
@@ -1260,6 +1221,11 @@
                     figurePos.row = newRow;
                     figurePos.col = newCol;
                     renderGrid();
+                    
+                    if (sumVisible) {
+                        sumDisplay.classList.add('hidden');
+                        sumVisible = false;
+                    }
                 }
             }
 
@@ -1267,6 +1233,7 @@
                 historySums.push(sum);
                 if (historySums.length > 15) historySums.shift();
                 updateHistoryList();
+                updateTopHistory();
             }
 
             function updateHistoryList() {
@@ -1283,11 +1250,9 @@
                 }
             }
 
-            // Event Listener
             figureSelect.addEventListener('change', (e) => {
                 currentFigure = e.target.value;
-                currentRotation = 0; // Rotation zurücksetzen
-                moveCount = 0;
+                currentRotation = 0;
                 renderGrid();
                 setTimeout(() => toggleMenu(false), 300);
             });
@@ -1309,7 +1274,7 @@
                 }
             });
 
-            // Touch-Steuerung (Wischen)
+            // Touch-Steuerung
             let touchStart = null;
             gridContainer.addEventListener('touchstart', (e) => {
                 touchStart = {
@@ -1322,7 +1287,7 @@
                 if (!touchStart) return;
                 const dx = e.changedTouches[0].clientX - touchStart.x;
                 const dy = e.changedTouches[0].clientY - touchStart.y;
-                const minDist = 30;
+                const minDist = 25;
                 
                 if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > minDist) {
                     if (dx > 0) moveFigure(0, 1);
@@ -1342,6 +1307,7 @@
             
             renderGrid();
             updateHistoryList();
+            updateTopHistory();
         })();
     </script>
 </body>
