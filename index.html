@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Optimiert für Chrome</title>
+    <title>Tetris Summen - Mit Entdeckungs-Info</title>
     <style>
         * {
             box-sizing: border-box;
@@ -126,23 +126,40 @@
             transform: rotate(-45deg) translate(6px, -6px);
         }
 
-        .history-top {
+        /* Anzeige-Bereich (Historie oder Entdeckungstipp) */
+        .display-area {
             flex: 1;
             display: flex;
             align-items: center;
-            gap: 5px;
             background: rgba(7, 54, 66, 0.9);
             border-radius: 30px;
-            padding: 5px 10px;
+            padding: 5px 12px;
             border: 2px solid #f39c12;
             height: 48px;
             margin-left: 8px;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
-        .history-top.hidden {
+        .display-area.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+
+        .history-items {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .history-items.hidden {
+            display: none;
         }
 
         .history-top-item {
@@ -171,6 +188,25 @@
             font-size: 0.8rem;
             font-weight: 600;
             white-space: nowrap;
+        }
+
+        .discovery-tip {
+            color: #ffd966;
+            font-size: 0.9rem;
+            font-weight: 500;
+            width: 100%;
+            text-align: left;
+            animation: pulse 2s infinite;
+        }
+
+        .discovery-tip.hidden {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
         }
 
         .sum-display-header {
@@ -311,7 +347,118 @@
             font-size: 1.5rem;
         }
 
-        .discovery-panel {
+        /* Radio-Gruppe im Menü */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 5px 0;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            accent-color: #f39c12;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .radio-item label {
+            flex: 1;
+            cursor: pointer;
+            color: #e0f0ff;
+        }
+
+        .difficulty-selector {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #4fa3c9;
+        }
+
+        .difficulty-title {
+            color: #f39c12;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            background: #1e4a5a;
+            border: 1px solid #4fa3c9;
+            border-radius: 20px;
+            padding: 8px 0;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-align: center;
+        }
+
+        .difficulty-btn.active {
+            background: #f39c12;
+            color: #111;
+            border-color: #f39c12;
+        }
+
+        .difficulty-btn:active {
+            transform: scale(0.95);
+        }
+
+        .difficulty-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Info-Button für Entdeckungen */
+        .info-btn {
+            background: #f39c12;
+            border: none;
+            border-bottom: 3px solid #b36b0e;
+            padding: 14px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0a1a24;
+            box-shadow: 0 3px 0 #b36b0e;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .info-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #b36b0e;
+        }
+
+        .info-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #0a1a24;
+        }
+
+        /* Entdeckungen-Panel (für Info-Button) */
+        .discoveries-panel {
             position: absolute;
             top: 80px;
             left: 12px;
@@ -323,20 +470,20 @@
             border-radius: 25px;
             padding: 16px;
             color: white;
-            z-index: 1100;
+            z-index: 1200;
             box-shadow: 0 8px 20px rgba(0,0,0,0.7);
             transition: all 0.3s ease;
-            max-height: 60vh;
+            max-height: 70vh;
             overflow-y: auto;
         }
 
-        .discovery-panel.hidden {
+        .discoveries-panel.hidden {
             opacity: 0;
             pointer-events: none;
             transform: translateY(-10px);
         }
 
-        .discovery-header {
+        .discoveries-header {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -345,13 +492,13 @@
             padding-bottom: 10px;
         }
 
-        .discovery-header h3 {
+        .discoveries-header h3 {
             font-size: 1.2rem;
             color: #f39c12;
             flex: 1;
         }
 
-        .discovery-close {
+        .discoveries-close {
             width: 36px;
             height: 36px;
             background: #ff6b6b;
@@ -367,67 +514,67 @@
             box-shadow: 0 3px 0 #b33f3f;
         }
 
-        .discovery-close:active {
+        .discoveries-close:active {
             transform: translateY(3px);
             box-shadow: none;
         }
 
-        .discovery-content {
+        .discoveries-content {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
         }
 
         .discovery-section {
             background: #1a3e4e;
             border-radius: 16px;
-            padding: 12px;
+            padding: 15px;
             border-left: 6px solid #f39c12;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .discovery-title {
-            font-size: 1rem;
+        .discovery-section-title {
+            font-size: 1.1rem;
             font-weight: 700;
             color: #f39c12;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .discovery-text {
-            font-size: 0.9rem;
+        .discovery-section-text {
+            font-size: 0.95rem;
             line-height: 1.4;
             color: #e0f0ff;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .discovery-example {
+        .discovery-section-example {
             background: #0f2a33;
             border-radius: 12px;
-            padding: 8px;
+            padding: 10px;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             border: 1px solid #5fa3c0;
             color: #b3e5fc;
             white-space: pre-wrap;
         }
 
-        .discovery-tip {
+        .discovery-section-tip {
             background: #f39c1220;
             border-radius: 12px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
+            padding: 8px 12px;
+            font-size: 0.9rem;
             border-left: 4px solid #f39c12;
             color: #ffd966;
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
-        .discovery-level {
+        .discovery-section-level {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            margin-right: 6px;
+            margin-right: 8px;
         }
 
         .level-basis {
@@ -506,29 +653,6 @@
             font-weight: 700;
             margin-bottom: 10px;
             padding-left: 5px;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .menu-item label {
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .menu-item input[type="checkbox"] {
-            width: 26px;
-            height: 26px;
-            accent-color: #f39c12;
-            cursor: pointer;
-            border-radius: 8px;
         }
 
         .dropdown {
@@ -674,13 +798,8 @@
                 height: 42px;
             }
 
-            .history-top {
+            .display-area {
                 height: 42px;
-            }
-
-            .history-top-item {
-                padding: 3px 4px;
-                font-size: 0.8rem;
             }
 
             .grid-wrapper {
@@ -719,11 +838,15 @@
                 <span></span>
             </div>
 
-            <div class="history-top" id="historyTop">
-                <span class="history-top-label">Letzte:</span>
-                <div class="history-top-item empty" id="historyTop1">-</div>
-                <div class="history-top-item empty" id="historyTop2">-</div>
-                <div class="history-top-item empty" id="historyTop3">-</div>
+            <!-- Anzeige-Bereich (wird dynamisch gefüllt) -->
+            <div class="display-area hidden" id="displayArea">
+                <div class="history-items" id="historyItems">
+                    <span class="history-top-label">Letzte:</span>
+                    <div class="history-top-item empty" id="historyTop1">-</div>
+                    <div class="history-top-item empty" id="historyTop2">-</div>
+                    <div class="history-top-item empty" id="historyTop3">-</div>
+                </div>
+                <div class="discovery-tip hidden" id="discoveryTip">Entdeckungstipp</div>
             </div>
         </div>
 
@@ -747,14 +870,30 @@
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Anzeige</div>
-                <div class="menu-item">
-                    <label for="showHistory">Historie anzeigen</label>
-                    <input type="checkbox" id="showHistory" checked>
+                <div class="menu-title">Anzeige-Modus</div>
+                <div class="radio-group" id="modeRadioGroup">
+                    <div class="radio-item">
+                        <input type="radio" id="modeNone" name="displayMode" value="none" checked>
+                        <label for="modeNone">Keine Anzeige</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="modeHistory" name="displayMode" value="history">
+                        <label for="modeHistory">📋 Historie anzeigen</label>
+                    </div>
+                    <div class="radio-item">
+                        <input type="radio" id="modeDiscoveries" name="displayMode" value="discoveries">
+                        <label for="modeDiscoveries">🔍 Entdeckungen (Tipp)</label>
+                    </div>
                 </div>
-                <div class="menu-item">
-                    <label for="showDiscoveries">🔍 Entdeckungen anzeigen</label>
-                    <input type="checkbox" id="showDiscoveries">
+                
+                <!-- Schwierigkeitsgrad-Auswahl (nur sichtbar im Entdeckungs-Modus) -->
+                <div class="difficulty-selector hidden" id="difficultySelector">
+                    <div class="difficulty-title">Schwierigkeitsgrad:</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="difficultyEasy" data-level="easy">Leicht</button>
+                        <button class="difficulty-btn" id="difficultyMedium" data-level="medium">Mittel</button>
+                        <button class="difficulty-btn" id="difficultyHard" data-level="hard">Schwer</button>
+                    </div>
                 </div>
             </div>
 
@@ -767,14 +906,23 @@
                     QR Code
                 </button>
             </div>
+
+            <!-- Info-Button für Entdeckungen (mit Rahmen getrennt) -->
+            <button class="info-btn" id="infoBtn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                Alle Entdeckungen anzeigen
+            </button>
         </div>
 
-        <div class="discovery-panel hidden" id="discoveryPanel">
-            <div class="discovery-header">
-                <h3>🔍 Mathematische Entdeckungen</h3>
-                <button class="discovery-close" id="discoveryClose">✕</button>
+        <!-- Entdeckungen-Panel (für Info-Button) -->
+        <div class="discoveries-panel hidden" id="discoveriesPanel">
+            <div class="discoveries-header">
+                <h3>🔍 Alle mathematischen Entdeckungen</h3>
+                <button class="discoveries-close" id="discoveriesClose">✕</button>
             </div>
-            <div class="discovery-content" id="discoveryContent"></div>
+            <div class="discoveries-content" id="discoveriesContent"></div>
         </div>
 
         <div class="qr-overlay" id="qrOverlay">
@@ -815,6 +963,263 @@
             let lastTapTime = 0;
             let lastTapTarget = null;
             let sumVisible = false;
+            
+            // Zustandsvariablen
+            let currentDisplayMode = 'none';
+            let currentDifficulty = 'easy';
+            
+            // Entdeckungstexte für jede Figur nach Schwierigkeitsgrad
+            const discoveryTips = {
+                I: {
+                    easy: "Der I-Balken hat 4 Zellen in einer Linie. Versuche ihn horizontal und vertikal zu bewegen!",
+                    medium: "I-Balken Formel: S = 10 + 40·r + 4·c. Beobachte wie sich die Summe beim Verschieben ändert!",
+                    hard: "I-Balken ist immer gerade (mod 4 = 2). Nur Summen wie 10, 14, 18, 22... sind möglich."
+                },
+                O: {
+                    easy: "Das O-Quadrat ist ein 2x2-Block. Beobachte die Summe der vier Zahlen!",
+                    medium: "O-Quadrat Formel: S = 26 + 40·r + 4·c. Die Summe wächst gleichmäßig beim Verschieben!",
+                    hard: "O-Quadrat liefert nur Summen der Form 4k+2: 26, 30, 34, 38, 42, 46..."
+                },
+                T: {
+                    easy: "Die T-Form sieht aus wie ein T. Zähle die vier Zahlen zusammen!",
+                    medium: "T-Form Formel: S = 18 + 40·r + 4·c. Vergleiche mit dem O-Quadrat!",
+                    hard: "T-Form ist auch immer gerade (mod 4 = 2). Die Summen sind 18, 22, 26, 30..."
+                },
+                L: {
+                    easy: "Die L-Form ist wie ein L geformt. Finde die Summe!",
+                    medium: "L-Form Formel: S = 55 + 40·r + 4·c. Das ist eine der größten Grundsummen!",
+                    hard: "L-Form ist immer ungerade (mod 4 = 3). Summen wie 55, 59, 63, 67..."
+                },
+                J: {
+                    easy: "Die J-Form ist das Spiegelbild des L. Berechne die Summe!",
+                    medium: "J-Form Formel: S = 57 + 40·r + 4·c. Sie ist immer 2 größer als die L-Form!",
+                    hard: "J-Form ist ungerade (mod 4 = 1). Summen: 57, 61, 65, 69, 73..."
+                }
+            };
+
+            // Vollständige Entdeckungen für das Info-Panel
+            const allDiscoveries = {
+                I: [
+                    {
+                        level: "Basis",
+                        title: "📐 Grundlegendes",
+                        text: "Der I-Balken besteht aus 4 Zellen in einer Linie.",
+                        example: "Horizontal: 1+2+3+4 = 10\nVertikal: 1+11+21+31 = 64",
+                        tip: "Die Ausrichtung macht einen großen Unterschied!"
+                    },
+                    {
+                        level: "Basis",
+                        title: "⬆️⬇️⬅️➡️ Bewegungen",
+                        text: "Bei vollständiger Figur:",
+                        example: "→ +4  ← -4\n↓ +40 ↑ -40",
+                        tip: "Die Änderung ist immer gleich!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🧮 Summenformel",
+                        text: "S = 10 + 40·r + 4·c",
+                        example: "r = Zeilen nach unten\nc = Spalten nach rechts",
+                        tip: "Damit kannst du Summen vorhersagen!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "📊 Extremwerte",
+                        text: "70 mögliche Positionen",
+                        example: "Min: 10\nMax: 370\nDifferenz: 360",
+                        tip: "Schiebe ganz nach unten rechts!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🟢🟠 Gerade/Ungerade",
+                        text: "Der I-Balken ist immer gerade.",
+                        example: "10, 14, 18, 22, 26...",
+                        tip: "Das ändert sich nie!"
+                    },
+                    {
+                        level: "Stark",
+                        title: "🔢 Nur bestimmte Summen",
+                        text: "Form: 4k + 2",
+                        example: "Also 2 mod 4",
+                        tip: "10, 14, 18, 22... nie 11 oder 15!"
+                    }
+                ],
+                O: [
+                    {
+                        level: "Basis",
+                        title: "📐 Grundlegendes",
+                        text: "Das O-Quadrat ist ein 2x2-Block mit 4 Zellen.",
+                        example: "Oben links: 1+2+11+12 = 26",
+                        tip: "Alle Summen sind gerade!"
+                    },
+                    {
+                        level: "Basis",
+                        title: "⬆️⬇️⬅️➡️ Bewegungen",
+                        text: "Bei vollständiger Figur:",
+                        example: "→ +4  ← -4\n↓ +40 ↑ -40",
+                        tip: "Die Änderung ist immer gleich!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🧮 Summenformel",
+                        text: "S = 26 + 40·r + 4·c",
+                        example: "r = Zeilen nach unten\nc = Spalten nach rechts",
+                        tip: "Damit kannst du Summen vorhersagen!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "📊 Extremwerte",
+                        text: "81 mögliche Positionen",
+                        example: "Min: 26\nMax: 378\nDifferenz: 352",
+                        tip: "Schiebe ganz nach unten rechts!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🟢🟠 Gerade/Ungerade",
+                        text: "Das O-Quadrat ist immer gerade.",
+                        example: "26, 30, 34, 38, 42...",
+                        tip: "Das ändert sich nie!"
+                    },
+                    {
+                        level: "Stark",
+                        title: "🔢 Nur bestimmte Summen",
+                        text: "Form: 4k + 2",
+                        example: "Also 2 mod 4",
+                        tip: "26, 30, 34, 38... nie 27 oder 31!"
+                    }
+                ],
+                T: [
+                    {
+                        level: "Basis",
+                        title: "📐 Grundlegendes",
+                        text: "Die T-Form hat 4 Zellen in T-Form.",
+                        example: "Oben: 1+2+3+12 = 18",
+                        tip: "Die untere Zelle ist oft größer!"
+                    },
+                    {
+                        level: "Basis",
+                        title: "⬆️⬇️⬅️➡️ Bewegungen",
+                        text: "Bei vollständiger Figur:",
+                        example: "→ +4  ← -4\n↓ +40 ↑ -40",
+                        tip: "Die Änderung ist immer gleich!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🧮 Summenformel",
+                        text: "S = 18 + 40·r + 4·c",
+                        example: "r = Zeilen nach unten\nc = Spalten nach rechts",
+                        tip: "Damit kannst du Summen vorhersagen!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "📊 Extremwerte",
+                        text: "72 mögliche Positionen",
+                        example: "Min: 18\nMax: 374\nDifferenz: 356",
+                        tip: "Schiebe ganz nach unten rechts!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🟢🟠 Gerade/Ungerade",
+                        text: "Die T-Form ist immer gerade.",
+                        example: "18, 22, 26, 30, 34...",
+                        tip: "Das ändert sich nie!"
+                    },
+                    {
+                        level: "Stark",
+                        title: "🔢 Nur bestimmte Summen",
+                        text: "Form: 4k + 2",
+                        example: "Also 2 mod 4",
+                        tip: "18, 22, 26, 30... nie 19 oder 23!"
+                    }
+                ],
+                L: [
+                    {
+                        level: "Basis",
+                        title: "📐 Grundlegendes",
+                        text: "Die L-Form hat 4 Zellen in L-Form.",
+                        example: "Oben links: 1+11+21+22 = 55",
+                        tip: "Eine der größten Grundsummen!"
+                    },
+                    {
+                        level: "Basis",
+                        title: "⬆️⬇️⬅️➡️ Bewegungen",
+                        text: "Bei vollständiger Figur:",
+                        example: "→ +4  ← -4\n↓ +40 ↑ -40",
+                        tip: "Die Änderung ist immer gleich!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🧮 Summenformel",
+                        text: "S = 55 + 40·r + 4·c",
+                        example: "r = Zeilen nach unten\nc = Spalten nach rechts",
+                        tip: "Damit kannst du Summen vorhersagen!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "📊 Extremwerte",
+                        text: "72 mögliche Positionen",
+                        example: "Min: 55\nMax: 411\nDifferenz: 356",
+                        tip: "Schiebe ganz nach unten rechts!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🟢🟠 Gerade/Ungerade",
+                        text: "Die L-Form ist immer ungerade.",
+                        example: "55, 59, 63, 67, 71...",
+                        tip: "Das ändert sich nie!"
+                    },
+                    {
+                        level: "Stark",
+                        title: "🔢 Nur bestimmte Summen",
+                        text: "Form: 4k + 3",
+                        example: "Also 3 mod 4",
+                        tip: "55, 59, 63, 67... nie 56 oder 60!"
+                    }
+                ],
+                J: [
+                    {
+                        level: "Basis",
+                        title: "📐 Grundlegendes",
+                        text: "Die J-Form ist das Spiegelbild des L.",
+                        example: "Oben links: 2+12+22+21 = 57",
+                        tip: "Immer 2 größer als die L-Form!"
+                    },
+                    {
+                        level: "Basis",
+                        title: "⬆️⬇️⬅️➡️ Bewegungen",
+                        text: "Bei vollständiger Figur:",
+                        example: "→ +4  ← -4\n↓ +40 ↑ -40",
+                        tip: "Die Änderung ist immer gleich!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🧮 Summenformel",
+                        text: "S = 57 + 40·r + 4·c",
+                        example: "r = Zeilen nach unten\nc = Spalten nach rechts",
+                        tip: "Damit kannst du Summen vorhersagen!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "📊 Extremwerte",
+                        text: "72 mögliche Positionen",
+                        example: "Min: 57\nMax: 413\nDifferenz: 356",
+                        tip: "Schiebe ganz nach unten rechts!"
+                    },
+                    {
+                        level: "Mittel",
+                        title: "🟢🟠 Gerade/Ungerade",
+                        text: "Die J-Form ist immer ungerade.",
+                        example: "57, 61, 65, 69, 73...",
+                        tip: "Das ändert sich nie!"
+                    },
+                    {
+                        level: "Stark",
+                        title: "🔢 Nur bestimmte Summen",
+                        text: "Form: 4k + 1",
+                        example: "Also 1 mod 4",
+                        tip: "57, 61, 65, 69... nie 58 oder 62!"
+                    }
+                ]
+            };
 
             const figures = {
                 I: {
@@ -853,10 +1258,6 @@
                 I: "I-Balken", O: "O-Quadrat", T: "T-Form", L: "L-Form", J: "J-Form"
             };
 
-            const baseSums = { I: 10, O: 26, T: 18, L: 55, J: 57 };
-            const parity = { I: "gerade", O: "gerade", T: "gerade", L: "ungerade", J: "ungerade" };
-            const modulo4 = { I: 2, O: 2, T: 2, L: 3, J: 1 };
-
             for (let r = 0; r < rows; r++) {
                 grid[r] = [];
                 for (let c = 0; c < cols; c++) {
@@ -870,16 +1271,27 @@
             const sumValueSpan = document.getElementById('sumValue');
             const showSumBtn = document.getElementById('showSumBtn');
             const rotateBtn = document.getElementById('rotateBtn');
-            const showHistoryCheck = document.getElementById('showHistory');
-            const showDiscoveriesCheck = document.getElementById('showDiscoveries');
-            const discoveryPanel = document.getElementById('discoveryPanel');
-            const discoveryContent = document.getElementById('discoveryContent');
-            const discoveryClose = document.getElementById('discoveryClose');
-
-            const historyTop = document.getElementById('historyTop');
+            
+            // DOM-Elemente für Anzeige
+            const displayArea = document.getElementById('displayArea');
+            const historyItems = document.getElementById('historyItems');
+            const discoveryTip = document.getElementById('discoveryTip');
             const historyTop1 = document.getElementById('historyTop1');
             const historyTop2 = document.getElementById('historyTop2');
             const historyTop3 = document.getElementById('historyTop3');
+            const modeNone = document.getElementById('modeNone');
+            const modeHistory = document.getElementById('modeHistory');
+            const modeDiscoveries = document.getElementById('modeDiscoveries');
+            const difficultySelector = document.getElementById('difficultySelector');
+            const difficultyEasy = document.getElementById('difficultyEasy');
+            const difficultyMedium = document.getElementById('difficultyMedium');
+            const difficultyHard = document.getElementById('difficultyHard');
+
+            // Info-Panel Elemente
+            const infoBtn = document.getElementById('infoBtn');
+            const discoveriesPanel = document.getElementById('discoveriesPanel');
+            const discoveriesClose = document.getElementById('discoveriesClose');
+            const discoveriesContent = document.getElementById('discoveriesContent');
 
             const hamburgerBtn = document.getElementById('hamburgerBtn');
             const hamburgerMenu = document.getElementById('hamburgerMenu');
@@ -890,153 +1302,106 @@
             const qrCloseBtn = document.getElementById('qrCloseBtn');
             const qrCanvas = document.getElementById('qrCanvas');
 
-            function getMaxValidPosition(figType, rotation) {
-                const offsets = figures[figType][rotation];
-                const maxRow = Math.max(...offsets.map(o => o[0]));
-                const maxCol = Math.max(...offsets.map(o => o[1]));
-                return { row: rows - 1 - maxRow, col: cols - 1 - maxCol };
-            }
-
-            function getMinSumForFigure(figType, rotation) {
-                const offsets = figures[figType][rotation];
-                const cells = offsets.map(([dr, dc]) => ({ row: dr, col: dc }));
-                return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
-            }
-
-            function getMaxSumForFigure(figType, rotation) {
-                const maxPos = getMaxValidPosition(figType, rotation);
-                const offsets = figures[figType][rotation];
-                const cells = offsets.map(([dr, dc]) => ({ row: maxPos.row + dr, col: maxPos.col + dc }));
-                return cells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
-            }
-
-            function getValidPositionCount(figType, rotation) {
-                const maxPos = getMaxValidPosition(figType, rotation);
-                return (maxPos.row + 1) * (maxPos.col + 1);
-            }
-
-            function generateDiscoveries() {
-                const cells = getFigureCells(currentFigure, figurePos.row, figurePos.col, currentRotation);
-                const sum = calculateSum();
-                const maxPos = getMaxValidPosition(currentFigure, currentRotation);
-                const minSum = getMinSumForFigure(currentFigure, currentRotation);
-                const maxSum = getMaxSumForFigure(currentFigure, currentRotation);
-                const validPositions = getValidPositionCount(currentFigure, currentRotation);
-
-                let discoveries = [];
-
-                discoveries.push({
-                    level: "Basis",
-                    title: "📐 Grundlegendes",
-                    text: `**${figureNames[currentFigure]}** mit 4 Zellen.`,
-                    example: `Aktuelle Summe: ${cells.map(c => grid[c.row][c.col]).join('+')} = **${sum}**`,
-                    tip: `Jede Figur hat genau 4 Kästchen!`
-                });
-
-                discoveries.push({
-                    level: "Basis",
-                    title: "⬆️⬇️⬅️➡️ Bewegungen",
-                    text: `Bei vollständiger Figur:`,
-                    example: `→ +4  ← -4\n↓ +40 ↑ -40`,
-                    tip: `Die Änderung ist immer gleich!`
-                });
-
-                discoveries.push({
-                    level: "Mittel",
-                    title: "🧮 Summenformel",
-                    text: `S = **${baseSums[currentFigure]}** + 40·r + 4·c`,
-                    example: `r = Zeilen nach unten\nc = Spalten nach rechts`,
-                    tip: `Damit kannst du Summen vorhersagen!`
-                });
-
-                discoveries.push({
-                    level: "Mittel",
-                    title: "📊 Extremwerte",
-                    text: `${validPositions} mögliche Positionen`,
-                    example: `Min: **${minSum}**\nMax: **${maxSum}**\nDifferenz: **${maxSum - minSum}**`,
-                    tip: `Schiebe ganz nach unten rechts!`
-                });
-
-                discoveries.push({
-                    level: "Mittel",
-                    title: "🟢🟠 Gerade/Ungerade",
-                    text: `${figureNames[currentFigure]} ist **immer ${parity[currentFigure]}**.`,
-                    example: `Aktuelle Summe ${sum} ist ${sum % 2 === 0 ? 'gerade' : 'ungerade'}.`,
-                    tip: `Das ändert sich nie!`
-                });
-
-                discoveries.push({
-                    level: "Stark",
-                    title: "🔢 Nur bestimmte Summen",
-                    text: `Form: 4k + ${modulo4[currentFigure]}`,
-                    example: `Also ${modulo4[currentFigure]} mod 4`,
-                    tip: `Z.B. 26, 30, 34... nie 27 oder 29!`
-                });
-
-                if (currentFigure !== 'O') {
-                    const otherRotation = (currentRotation + 1) % 4;
-                    const rotatedCells = getFigureCells(currentFigure, figurePos.row, figurePos.col, otherRotation);
-
-                    if (rotatedCells.length === 4) {
-                        const rotatedSum = rotatedCells.reduce((acc, {row, col}) => acc + grid[row][col], 0);
-
-                        discoveries.push({
-                            level: "Stark",
-                            title: "↻ Rotation",
-                            text: `Drehen verändert die Summe.`,
-                            example: `Aktuell: **${sum}**\nGedreht: **${rotatedSum}**\nDifferenz: **${rotatedSum - sum}**`,
-                            tip: `Probiere den Rotieren-Button!`
-                        });
-                    }
+            // Funktionen für den Anzeige-Modus
+            function updateDisplayMode() {
+                if (modeNone.checked) {
+                    currentDisplayMode = 'none';
+                    displayArea.classList.add('hidden');
+                    difficultySelector.classList.add('hidden');
+                } else if (modeHistory.checked) {
+                    currentDisplayMode = 'history';
+                    displayArea.classList.remove('hidden');
+                    historyItems.classList.remove('hidden');
+                    discoveryTip.classList.add('hidden');
+                    difficultySelector.classList.add('hidden');
+                    updateTopHistory();
+                } else if (modeDiscoveries.checked) {
+                    currentDisplayMode = 'discoveries';
+                    displayArea.classList.remove('hidden');
+                    historyItems.classList.add('hidden');
+                    discoveryTip.classList.remove('hidden');
+                    difficultySelector.classList.remove('hidden');
+                    updateDiscoveryTip();
                 }
-
-                return discoveries;
             }
 
-            function updateDiscoveries() {
-                const discoveries = generateDiscoveries();
+            function updateDiscoveryTip() {
+                const tip = discoveryTips[currentFigure][currentDifficulty];
+                discoveryTip.textContent = tip;
+            }
+
+            function setDifficulty(level) {
+                currentDifficulty = level;
+                
+                [difficultyEasy, difficultyMedium, difficultyHard].forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                if (level === 'easy') difficultyEasy.classList.add('active');
+                if (level === 'medium') difficultyMedium.classList.add('active');
+                if (level === 'hard') difficultyHard.classList.add('active');
+                
+                if (currentDisplayMode === 'discoveries') {
+                    updateDiscoveryTip();
+                }
+            }
+
+            // Info-Panel Funktionen
+            function updateDiscoveriesPanel() {
+                const discoveries = allDiscoveries[currentFigure];
                 let html = '';
+                
                 discoveries.forEach(d => {
                     const levelClass = d.level === 'Basis' ? 'level-basis' : (d.level === 'Mittel' ? 'level-mittel' : 'level-stark');
                     html += `
                         <div class="discovery-section">
-                            <div class="discovery-title">
-                                <span class="discovery-level ${levelClass}">${d.level}</span>
+                            <div class="discovery-section-title">
+                                <span class="discovery-section-level ${levelClass}">${d.level}</span>
                                 ${d.title}
                             </div>
-                            <div class="discovery-text">${d.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
-                            <div class="discovery-example">${d.example.replace(/\n/g, '<br>')}</div>
-                            ${d.tip ? `<div class="discovery-tip">💡 ${d.tip}</div>` : ''}
+                            <div class="discovery-section-text">${d.text}</div>
+                            <div class="discovery-section-example">${d.example.replace(/\n/g, '<br>')}</div>
+                            <div class="discovery-section-tip">💡 ${d.tip}</div>
                         </div>
                     `;
                 });
-                discoveryContent.innerHTML = html;
+                
+                discoveriesContent.innerHTML = html;
             }
 
-            function toggleDiscoveryPanel(show) {
-                if (show === undefined) {
-                    if (showDiscoveriesCheck.checked) {
-                        updateDiscoveries();
-                        discoveryPanel.classList.remove('hidden');
-                    } else {
-                        discoveryPanel.classList.add('hidden');
-                    }
-                } else if (show) {
-                    updateDiscoveries();
-                    discoveryPanel.classList.remove('hidden');
+            function toggleDiscoveriesPanel(show) {
+                if (show) {
+                    updateDiscoveriesPanel();
+                    discoveriesPanel.classList.remove('hidden');
+                    toggleMenu(false); // Menü schließen wenn Panel geöffnet wird
                 } else {
-                    discoveryPanel.classList.add('hidden');
+                    discoveriesPanel.classList.add('hidden');
                 }
             }
 
-            showDiscoveriesCheck.addEventListener('change', (e) => {
-                toggleDiscoveryPanel(e.target.checked);
+            infoBtn.addEventListener('click', () => {
+                toggleDiscoveriesPanel(true);
             });
 
-            discoveryClose.addEventListener('click', () => {
-                showDiscoveriesCheck.checked = false;
-                discoveryPanel.classList.add('hidden');
+            discoveriesClose.addEventListener('click', () => {
+                toggleDiscoveriesPanel(false);
             });
+
+            discoveriesPanel.addEventListener('click', (e) => {
+                if (e.target === discoveriesPanel) {
+                    toggleDiscoveriesPanel(false);
+                }
+            });
+
+            // Event-Listener für Radio-Buttons
+            modeNone.addEventListener('change', updateDisplayMode);
+            modeHistory.addEventListener('change', updateDisplayMode);
+            modeDiscoveries.addEventListener('change', updateDisplayMode);
+
+            // Event-Listener für Schwierigkeits-Buttons
+            difficultyEasy.addEventListener('click', () => setDifficulty('easy'));
+            difficultyMedium.addEventListener('click', () => setDifficulty('medium'));
+            difficultyHard.addEventListener('click', () => setDifficulty('hard'));
 
             function generateQRCode() {
                 const url = 'https://alexgpunkt.github.io/TetrisRechner/';
@@ -1083,16 +1448,6 @@
             menuOverlay.addEventListener('click', () => {
                 toggleMenu(false);
             });
-
-            function updateHistoryVisibility() {
-                if (showHistoryCheck.checked) {
-                    historyTop.classList.remove('hidden');
-                } else {
-                    historyTop.classList.add('hidden');
-                }
-            }
-
-            showHistoryCheck.addEventListener('change', updateHistoryVisibility);
 
             function updateTopHistory() {
                 const lastThree = historySums.slice(-3).reverse();
@@ -1141,10 +1496,6 @@
                     currentRotation = newRotation;
                     renderGrid();
 
-                    if (showDiscoveriesCheck.checked) {
-                        updateDiscoveries();
-                    }
-
                     const activeCells = document.querySelectorAll('.grid-cell.active');
                     activeCells.forEach(cell => {
                         cell.style.transform = 'scale(1.1)';
@@ -1174,9 +1525,9 @@
                         gridContainer.appendChild(cell);
                     }
                 }
-
-                if (showDiscoveriesCheck.checked) {
-                    updateDiscoveries();
+                
+                if (currentDisplayMode === 'discoveries') {
+                    updateDiscoveryTip();
                 }
             }
 
@@ -1244,13 +1595,24 @@
             function addHistoryEntry(sum) {
                 historySums.push(sum);
                 if (historySums.length > 15) historySums.shift();
-                updateTopHistory();
+                
+                if (currentDisplayMode === 'history') {
+                    updateTopHistory();
+                }
             }
 
             figureSelect.addEventListener('change', (e) => {
                 currentFigure = e.target.value;
                 currentRotation = 0;
+                
+                setDifficulty('easy');
+                
                 renderGrid();
+                
+                if (currentDisplayMode === 'discoveries') {
+                    updateDiscoveryTip();
+                }
+                
                 setTimeout(() => toggleMenu(false), 300);
             });
 
@@ -1295,10 +1657,12 @@
                 e.preventDefault();
             }, { passive: false });
 
-            showHistoryCheck.checked = true;
-            showDiscoveriesCheck.checked = false;
-            updateHistoryVisibility();
-
+            // Initialisierung
+            modeNone.checked = true;
+            currentDisplayMode = 'none';
+            displayArea.classList.add('hidden');
+            difficultySelector.classList.add('hidden');
+            
             renderGrid();
             updateTopHistory();
         })();
