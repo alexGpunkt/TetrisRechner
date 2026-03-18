@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tetris Summen - Mit Entdeckungs-Info</title>
+    <title>Tetris Summen - Mit mehrzeiligem Hinweistext</title>
     <style>
         * {
             box-sizing: border-box;
@@ -126,24 +126,25 @@
             transform: rotate(-45deg) translate(6px, -6px);
         }
 
-        /* Anzeige-Bereich (Historie oder Entdeckungstipp) */
+        /* Anzeige-Bereich - optimiert für mehrzeiligen Text */
         .display-area {
             flex: 1;
             display: flex;
             align-items: center;
             background: rgba(7, 54, 66, 0.9);
             border-radius: 30px;
-            padding: 5px 12px;
+            padding: 8px 15px;
             border: 2px solid #f39c12;
-            height: 48px;
+            min-height: 48px;
             margin-left: 8px;
+            margin-right: 0;
             transition: all 0.3s ease;
             color: white;
-            font-size: 0.9rem;
+            font-size: 0.85rem; /* Verkleinerte Schrift */
             font-weight: 500;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+            line-height: 1.4;
+            max-width: calc(100% - 56px); /* Passt sich an Button-Breite an */
+            width: 100%;
         }
 
         .display-area.hidden {
@@ -168,7 +169,7 @@
             padding: 5px 6px;
             color: #f7e05e;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             border-left: 3px solid #f39c12;
             box-shadow: 0 2px 0 #0d303e;
             flex: 1;
@@ -192,21 +193,20 @@
 
         .discovery-tip {
             color: #ffd966;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
             width: 100%;
             text-align: left;
-            animation: pulse 2s infinite;
+            line-height: 1.4;
+            word-wrap: break-word;
+            white-space: normal; /* Ermöglicht mehrzeiligen Text */
+            overflow: visible;
+            max-height: none;
+            animation: none; /* Entfernt Pulsieren für bessere Lesbarkeit */
         }
 
         .discovery-tip.hidden {
             display: none;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.8; }
-            50% { opacity: 1; }
-            100% { opacity: 0.8; }
         }
 
         .sum-display-header {
@@ -799,7 +799,9 @@
             }
 
             .display-area {
-                height: 42px;
+                min-height: 42px;
+                font-size: 0.8rem;
+                padding: 6px 12px;
             }
 
             .grid-wrapper {
@@ -838,7 +840,7 @@
                 <span></span>
             </div>
 
-            <!-- Anzeige-Bereich (wird dynamisch gefüllt) -->
+            <!-- Anzeige-Bereich (optimiert für mehrzeiligen Text) -->
             <div class="display-area hidden" id="displayArea">
                 <div class="history-items" id="historyItems">
                     <span class="history-top-label">Letzte:</span>
